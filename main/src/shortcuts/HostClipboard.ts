@@ -21,7 +21,7 @@ export class HostClipboard {
     return this.pollPromise != null;
   }
 
-  constructor(private logger: Logger) {}
+  constructor(private logger: Logger) { }
 
   updateOptions(restoreClipboard: boolean) {
     this.shouldRestore = restoreClipboard;

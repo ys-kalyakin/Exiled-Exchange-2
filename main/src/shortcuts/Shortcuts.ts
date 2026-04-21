@@ -15,6 +15,8 @@ import type { OverlayWindow } from "../windowing/OverlayWindow";
 import type { GameWindow } from "../windowing/GameWindow";
 import type { GameConfig } from "../host-files/GameConfig";
 import type { ServerEvents } from "../server";
+import { NodeGamepad } from '@sensslen/node-gamepad';
+import { electron } from "node:process";
 
 type UiohookKeyT = keyof typeof UiohookKey;
 const UiohookToName = Object.fromEntries(
@@ -27,6 +29,8 @@ export class Shortcuts {
   private logKeys = false;
   private areaTracker: WidgetAreaTracker;
   private clipboard: HostClipboard;
+  private gamepad: NodeGamepad;
+  private gamepadL3Pressed: boolean;
 
   static async create(
     logger: Logger,
@@ -55,8 +59,15 @@ export class Shortcuts {
     private server: ServerEvents,
     private ocrWorker: OcrWorker,
   ) {
+
     this.areaTracker = new WidgetAreaTracker(server, overlay);
     this.clipboard = new HostClipboard(logger);
+
+    const pro2 = require('./8bitdopro2.json')
+    this.gamepad = new NodeGamepad(pro2);
+    this.gamepad.start();
+    this.gamepadL3Pressed = false;
+    this.logKeys = true;
 
     this.poeWindow.on("active-change", (isActive) => {
       process.nextTick(() => {
@@ -84,8 +95,7 @@ export class Shortcuts {
     uIOhook.on("keyup", (e) => {
       if (!this.logKeys) return;
       this.logger.write(
-        `debug [Shortcuts] Keyup ${
-          UiohookToName[e.keycode] || "not_supported_key"
+        `debug [Shortcuts] Keyup ${UiohookToName[e.keycode] || "not_supported_key"
         }`,
       );
     });
@@ -172,6 +182,22 @@ export class Shortcuts {
   }
 
   private register() {
+    this.gamepad.on("L3:press", () => {
+      this.gamepadL3Pressed = true;
+    });
+    this.gamepad.on("L3:release", () => {
+      this.gamepadL3Pressed = false;
+    });
+
+    this.gamepad.on("RT:press", () => {
+      if (this.gamepadL3Pressed) {
+        for (const entry of this.actions) {
+          if (entry.action.type === 'copy-item' && entry.action.focusOverlay) {
+            this.copyItemCallback(entry);
+          }
+        }
+      }
+    });
     for (const entry of this.actions) {
       const isOk = globalShortcut.register(
         shortcutToElectron(entry.shortcut),
@@ -209,35 +235,7 @@ export class Shortcuts {
           } else if (entry.action.type === "stash-search") {
             stashSearch(entry.action.text, this.clipboard, this.overlay);
           } else if (entry.action.type === "copy-item") {
-            const { action } = entry;
-
-            const pressPosition = screen.getCursorScreenPoint();
-
-            this.clipboard
-              .readItemText()
-              .then((clipboard) => {
-                this.areaTracker.removeListeners();
-                this.server.sendEventTo("last-active", {
-                  name: "MAIN->CLIENT::item-text",
-                  payload: {
-                    target: action.target,
-                    clipboard,
-                    position: pressPosition,
-                    focusOverlay: Boolean(action.focusOverlay),
-                  },
-                });
-                if (action.focusOverlay && this.overlay.wasUsedRecently) {
-                  this.overlay.assertOverlayActive();
-                }
-              })
-              .catch(() => {});
-
-            pressKeysToCopyItemText(
-              entry.keepModKeys
-                ? entry.shortcut.split(" + ").filter((key) => isModKey(key))
-                : undefined,
-              this.gameConfig.showModsKey,
-            );
+            this.copyItemCallback(entry);
           } else if (
             entry.action.type === "ocr-text" &&
             entry.action.target === "heist-gems"
@@ -264,7 +262,7 @@ export class Shortcuts {
                   },
                 });
               })
-              .catch(() => {});
+              .catch(() => { });
           }
         },
       );
@@ -282,7 +280,43 @@ export class Shortcuts {
   }
 
   private unregister() {
+    this.gamepad.removeAllListeners();
     globalShortcut.unregisterAll();
+  }
+
+  private copyItemCallback(entry: ShortcutAction) {
+    if (entry.action.type === 'copy-item') {
+      const { action } = entry;
+
+      const pressPosition = screen.getCursorScreenPoint();
+
+      this.clipboard
+        .readItemText()
+        .then((clipboard) => {
+          this.areaTracker.removeListeners();
+          this.server.sendEventTo("last-active", {
+            name: "MAIN->CLIENT::item-text",
+            payload: {
+              target: action.target,
+              clipboard,
+              position: pressPosition,
+              focusOverlay: Boolean(action.focusOverlay),
+            },
+          });
+          if (action.focusOverlay && this.overlay.wasUsedRecently) {
+            this.overlay.assertOverlayActive();
+          }
+        })
+        .catch(() => { });
+
+      pressKeysToCopyItemText(
+        entry.keepModKeys
+          ? entry.shortcut.split(" + ").filter((key) => isModKey(key))
+          : undefined,
+        this.gameConfig.showModsKey,
+      );
+
+    }
   }
 }
 

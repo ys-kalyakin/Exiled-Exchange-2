@@ -24,7 +24,12 @@ if (!app.requestSingleInstanceLock()) {
 if (process.platform !== "darwin") {
   app.disableHardwareAcceleration();
 }
-app.enableSandbox();
+if (process.platform != 'linux') {
+  app.enableSandbox();
+} else {
+  app.commandLine.appendSwitch("ozone-platform-hint", "x11");
+  app.commandLine.appendSwitch("ozone-platform", "x11");
+}
 let tray: AppTray;
 
 (async () => {
@@ -119,6 +124,7 @@ let tray: AppTray;
             fileWriter.restart(cfg.libraryAlpha, cfg.libraryOutputPath);
           },
         );
+
         uIOhook.start();
         console.log("uIOhook started");
         const port = await startServer(appUpdater, logger);

@@ -1,0 +1,61 @@
+{
+  "vendorID": 11720,
+  "productID": 24582,
+  "joysticks": [
+    {
+      "name": "left",
+      "x": {
+        "pin": 0
+      },
+      "y": {
+        "pin": 1
+      }
+    },
+    {
+      "name": "right",
+      "x": {
+        "pin": 2
+      },
+      "y": {
+        "pin": 3
+      }
+    }
+  ],
+  "buttons": [
+    {
+      "value": "(value & 32) >= 32",
+      "pin": 9,
+      "name": "L3"
+    },
+    {
+      "value": "(value & 64) >= 64",
+      "pin": 9,
+      "name": "R3"
+    },
+    {
+      "value": "(value & 96) >= 96",
+      "pin": 9,
+      "name": "L3 + R3"
+    },
+    {
+      "value": "(value & 64) > 0",
+      "pin": 8,
+      "name": "LB"
+    },
+    {
+      "value": "(value & 128) > 0",
+      "pin": 8,
+      "name": "RB"
+    },
+    {
+      "value": "(value & 255) > 0",
+      "pin": 7,
+      "name": "LT"
+    },
+    {
+      "value": "(value & 255) > 0",
+      "pin": 6,
+      "name": "RT"
+    }
+  ]
+}

@@ -195,25 +195,6 @@
       "*.ndjson": "jsonl",
       "*.ndjson.old": "jsonl"
     },
-    "workbench.colorCustomizations": {
-      "activityBar.activeBackground": "#2f7c47",
-      "activityBar.background": "#2f7c47",
-      "activityBar.foreground": "#e7e7e7",
-      "activityBar.inactiveForeground": "#e7e7e799",
-      "activityBarBadge.background": "#422c74",
-      "activityBarBadge.foreground": "#e7e7e7",
-      "commandCenter.border": "#e7e7e799",
-      "sash.hoverBorder": "#2f7c47",
-      "statusBar.background": "#215732",
-      "statusBar.foreground": "#e7e7e7",
-      "statusBarItem.hoverBackground": "#2f7c47",
-      "statusBarItem.remoteBackground": "#215732",
-      "statusBarItem.remoteForeground": "#e7e7e7",
-      "titleBar.activeBackground": "#215732",
-      "titleBar.activeForeground": "#e7e7e7",
-      "titleBar.inactiveBackground": "#21573299",
-      "titleBar.inactiveForeground": "#e7e7e799"
-    },
     "peacock.color": "#215732",
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
@@ -225,5 +206,17 @@
       "tsconfig.json": "tsconfig.*.json",
       "package.json": ".*, eslint.config.ts, CLAUDE.md, AGENTS.md, bun.lock, docker-compose.yml, docker-compose.yaml, dagger.json, env.d.ts, postcss.config.ts, vitest.config.*.ts, Dockerfile, railway.json, vitest.config.*.ts, uuid-rocks.code-workspace, astro.config.ts, ndstories.code-workspace, wrangler.jsonc, workflows.code-workspace, astroblog.code-workspace, astro.config.mjs, drizzle.config.ts, Earthfile, workers.code-workspace, Justfile, CHANGELOG.md, vitest.config.ts, vitest.workspace.ts, postcss.config.mjs, vite.config.ts, worker-configuration.d.ts, README.md, package-lock.json, yarn.lock, postcss.config.js, remix.config.js, remix.env.d.ts, tailwind.config.js, tsconfig.json, server.ts, tailwind.config.ts, turbo.jsonc, LICENSE, pnpm-lock.yaml, pnpm-workspace.yaml, vite.config.mjs, electron-builder.yml, vite.config.mts"
     },
+    "editor.fontSize": 14,
+    "window.autoDetectColorScheme": false,
+    "window.density.editorTabHeight": "compact",
+    "window.zoomLevel": 1,
+    "workbench.editor.decorations.colors": true,
+    "workbench.colorTheme": "Solarized Light",
+    "workbench.preferredDarkColorTheme": "Solarized Dark",
+    "workbench.preferredHighContrastLightColorTheme": "Solarized Light",
+    "workbench.preferredLightColorTheme": "Solarized Light",
+    "workbench.editor.pinnedTabSizing": "compact",
+    "workbench.activityBar.iconClickBehavior": "toggle",
+    "workbench.activityBar.compact": true,
   }
 }

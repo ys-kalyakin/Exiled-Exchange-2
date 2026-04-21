@@ -21,7 +21,9 @@
   "main": "dist/main.js",
   "dependencies": {
     "electron-overlay-window": "4.0.2",
-    "uiohook-napi": "1.5.x"
+    "node-hid": "^3.3.0",
+    "uiohook-napi": "1.5.x",
+    "@sensslen/node-gamepad": "1.0.8"
   },
   "devDependencies": {
     "@types/ini": "^4.1.0",
@@ -34,8 +36,8 @@
     "electron-devtools-installer": "^4.0.0",
     "electron-updater": "^6.6.2",
     "esbuild": "^0.27.2",
-    "ini": "^6.0.0",
     "eslint-config-prettier": "^9.1.0",
+    "ini": "^6.0.0",
     "prettier": "3.4.2",
     "typescript": "5.9.x",
     "ws": "^8.16.0"

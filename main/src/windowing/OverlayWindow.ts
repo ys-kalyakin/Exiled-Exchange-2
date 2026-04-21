@@ -42,6 +42,7 @@ export class OverlayWindow {
         allowRunningInsecureContent: false,
         webviewTag: true,
         spellcheck: false,
+        sandbox: false
       },
     });
 
@@ -160,8 +161,8 @@ export class OverlayWindow {
         "PoE2 window - No access",
         // ----------------------
         "Path of Exile 2 is running with administrator rights.\n" +
-          "\n" +
-          "You need to restart Exiled Exchange 2 with administrator rights.",
+        "\n" +
+        "You need to restart Exiled Exchange 2 with administrator rights.",
       );
     } else {
       this.server.sendEventTo("broadcast", {

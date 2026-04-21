@@ -7,7 +7,7 @@ const isDev = !process.argv.includes('--prod')
 const electronRunner = (() => {
   let handle = null
   return {
-    restart () {
+    restart() {
       console.info('Restarting Electron process.')
 
       if (handle) handle.kill()
@@ -22,7 +22,8 @@ const visionBuild = await esbuild.build({
   entryPoints: ['src/vision/link-worker.ts'],
   bundle: true,
   platform: 'node',
-  outfile: 'dist/vision.js'
+  outfile: 'dist/vision.js',
+  sourcemap: isDev ? 'inline' : false
 })
 
 const mainContext = await esbuild.context({
@@ -30,15 +31,16 @@ const mainContext = await esbuild.context({
   bundle: true,
   minify: !isDev,
   platform: 'node',
-  external: ['electron', 'uiohook-napi', 'electron-overlay-window'],
+  external: ['electron', 'uiohook-napi', 'electron-overlay-window', 'node-hid', '@sensslen/node-gamepad'],
   outfile: 'dist/main.js',
+  sourcemap: isDev ? 'inline' : false,
   define: {
     'process.env.STATIC': (isDev) ? '"../build/icons"' : '"."',
     'process.env.VITE_DEV_SERVER_URL': (isDev) ? '"http://localhost:5173"' : 'null'
   },
   plugins: (isDev) ? [{
     name: 'electron-runner',
-    setup (build) {
+    setup(build) {
       build.onEnd((result) => {
         if (!result.errors.length) electronRunner.restart()
       })
