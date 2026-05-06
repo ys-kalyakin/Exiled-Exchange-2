@@ -15,55 +15,56 @@ export interface HostConfig {
 
 export interface ShortcutAction {
   shortcut: string;
+  gamepadCombo?: string;
   keepModKeys?: true;
   action:
-    | {
-        type: "copy-item";
-        focusOverlay?: boolean;
-        target: string;
-      }
-    | {
-        type: "ocr-text";
-        target: "heist-gems";
-      }
-    | {
-        type: "trigger-event";
-        target: string;
-      }
-    | {
-        type: "stash-search";
-        text: string;
-      }
-    | {
-        type: "toggle-overlay";
-      }
-    | {
-        type: "paste-in-chat";
-        text: string;
-        send: boolean;
-      }
-    | {
-        type: "test-only";
-      };
+  | {
+    type: "copy-item";
+    focusOverlay?: boolean;
+    target: string;
+  }
+  | {
+    type: "ocr-text";
+    target: "heist-gems";
+  }
+  | {
+    type: "trigger-event";
+    target: string;
+  }
+  | {
+    type: "stash-search";
+    text: string;
+  }
+  | {
+    type: "toggle-overlay";
+  }
+  | {
+    type: "paste-in-chat";
+    text: string;
+    send: boolean;
+  }
+  | {
+    type: "test-only";
+  };
 }
 
 export type UpdateInfo =
   | {
-      state: "initial" | "checking-for-update";
-    }
+    state: "initial" | "checking-for-update";
+  }
   | {
-      state: "update-available";
-      version: string;
-      noDownloadReason: "not-supported" | "disabled-by-flag" | null;
-    }
+    state: "update-available";
+    version: string;
+    noDownloadReason: "not-supported" | "disabled-by-flag" | null;
+  }
   | {
-      state: "update-downloaded";
-      version: string;
-    }
+    state: "update-downloaded";
+    version: string;
+  }
   | {
-      state: "update-not-available" | "error";
-      checkedAt: number;
-    };
+    state: "update-not-available" | "error";
+    checkedAt: number;
+  };
 
 export interface HostState {
   contents: string | null;
@@ -204,26 +205,26 @@ type IpcUpdaterState = Event<"MAIN->CLIENT::updater-state", UpdateInfo>;
 type IpcUserAction = Event<
   "CLIENT->MAIN::user-action",
   | {
-      action: "check-for-update" | "update-and-restart" | "quit";
-    }
+    action: "check-for-update" | "update-and-restart" | "quit";
+  }
   | {
-      action: "stash-search";
-      text: string;
-    }
+    action: "stash-search";
+    text: string;
+  }
 >;
 
 type IpcWriteCsv = Event<
   "CLIENT->MAIN::write-data",
   | {
-      action: "log-item";
-      text: string;
-    }
+    action: "log-item";
+    text: string;
+  }
   | {
-      action: "session";
-      start: boolean;
-      name?: string;
-      header?: string;
-    }
+    action: "session";
+    start: boolean;
+    name?: string;
+    header?: string;
+  }
 >;
 
 interface Event<TName extends string, TPayload = undefined> {
