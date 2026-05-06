@@ -62,7 +62,7 @@ export class Shortcuts {
         this.areaTracker = new WidgetAreaTracker(server, overlay);
         this.clipboard = new HostClipboard(logger);
 
-        this.gamepad = new Gamepad(gamepadConfigs.eightBitDoPro2, console);
+        this.gamepad = new Gamepad(gamepadConfigs.eightBitDoPro2);
         this.gamepad.start();
         this.logKeys = true;
 
@@ -190,6 +190,11 @@ export class Shortcuts {
                 this.gamepad.on(GamepadEvent.COMBO_DOWN, (_: string) => {
                     this.handleHotkey(entry);
                 });
+                this.gamepad.on(GamepadEvent.DOWN, (button: GamepadButton) => {
+                    if (button === GamepadButton.B) {
+                        this.overlay.toggleActiveState();
+                    }
+                });
             }
 
             const isOk = globalShortcut.register(
@@ -210,7 +215,6 @@ export class Shortcuts {
     }
 
     private unregister() {
-        this.gamepad.removeAllListeners();
         globalShortcut.unregisterAll();
     }
 

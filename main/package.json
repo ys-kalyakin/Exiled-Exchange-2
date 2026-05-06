@@ -20,10 +20,10 @@
   },
   "main": "dist/main.js",
   "dependencies": {
-    "electron-overlay-window": "4.0.2",
+    "electron-overlay-window": "4.1.0",
     "node-hid": "^3.3.0",
     "uiohook-napi": "1.5.x",
-    "gamepad-io": "^0.2.2"
+    "gamepad-io": "^0.3.2"
   },
   "devDependencies": {
     "@types/ini": "^4.1.0",
