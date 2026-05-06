@@ -190,6 +190,11 @@ export class Shortcuts {
                 this.gamepad.on(GamepadEvent.COMBO_DOWN, (_: string) => {
                     this.handleHotkey(entry);
                 });
+                if (entry.action.type === 'copy-item' && entry.action.focusOverlay === false) {
+                    this.gamepad.on(GamepadEvent.COMBO_UP, (_: string) => {
+                        this.overlay.toggleActiveState();
+                    });
+                }
                 this.gamepad.on(GamepadEvent.DOWN, (button: GamepadButton) => {
                     if (button === GamepadButton.B) {
                         this.overlay.toggleActiveState();

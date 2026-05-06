@@ -652,6 +652,7 @@ function getConfigForHost(): HostConfig {
     if (priceCheck.hotkey) {
         actions.push({
             shortcut: `${priceCheck.hotkeyHold} + ${priceCheck.hotkey}`,
+            gamepadCombo: "R3 + RT",
             action: { type: "copy-item", target: "price-check", focusOverlay: false },
             keepModKeys: true,
         });
