@@ -23,7 +23,7 @@
     "electron-overlay-window": "4.0.2",
     "node-hid": "^3.3.0",
     "uiohook-napi": "1.5.x",
-    "@sensslen/node-gamepad": "1.0.8"
+    "gamepad-io": "^0.2.2"
   },
   "devDependencies": {
     "@types/ini": "^4.1.0",
