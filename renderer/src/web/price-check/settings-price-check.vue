@@ -106,6 +106,16 @@
     <ui-checkbox class="mb-4" v-model="rememberCurrency">{{
       t(":remember_currency")
     }}</ui-checkbox>
+
+    <div class="mb-2">
+      <ui-checkbox class="mb-1" v-model="rememberListingType">{{
+        t(":remember_listing")
+      }}</ui-checkbox>
+      <div class="mb-4 italic text-gray-500">
+        {{ t(":remember_listing_note") }}
+      </div>
+    </div>
+
     <ui-checkbox class="mb-4" v-model="activateStockFilter">{{
       t(":select_stock")
     }}</ui-checkbox>
@@ -137,23 +147,6 @@
     }}</ui-checkbox>
 
     <div class="mb-4">
-      <select
-        v-model="autoFillEmptyRuneSockets"
-        class="p-1 rounded bg-gray-700 w-24"
-      >
-        <!-- This is true since it will be assigned to "disabled" in the code -->
-        <option :value="false">No</option>
-        <option value="Iron Rune">
-          {{ getAugmentNameByRef("Iron Rune") }}
-        </option>
-      </select>
-      Automatically fill empty augment sockets
-    </div>
-    <ui-checkbox class="mb-4" v-model="openItemEditorAbove">{{
-      t(":open_editor_above")
-    }}</ui-checkbox>
-
-    <div class="mb-4">
       <div class="flex-1 mb-1">{{ t(":use_tooltip_hover") }}</div>
       <div class="mb-1 flex">
         <ui-radio v-model="tooltipHover" value="off" class="mr-4">{{
@@ -174,21 +167,6 @@
     <ui-checkbox class="mb-4" v-model="alwaysShowTier">{{
       t(":always_show_tier")
     }}</ui-checkbox>
-
-    <div class="mb-4">
-      <select v-model="travelButtonEnable" class="p-1 rounded bg-gray-700 w-24">
-        <option value="disabled">
-          {{ t(":travel_option_disabled") }}
-        </option>
-        <option value="button">
-          {{ t(":travel_option_button") }}
-        </option>
-        <option value="row">
-          {{ t(":travel_option_row") }}
-        </option>
-      </select>
-      {{ t(":travel_to_hideout") }}
-    </div>
 
     <div class="mb-4" :class="{ 'p-2 bg-orange-600 rounded': builtinBrowser }">
       <ui-checkbox v-model="builtinBrowser">{{
@@ -234,6 +212,23 @@
               class="rounded bg-gray-900 px-1 block w-16 mb-1 font-poe text-center"
             />
             <span class="ml-2">{{ t("seconds") }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-2 rounded border-gray-700 mb-2">
+      <div class="bg-gray-700 p-2 mb-2">{{ t(":warn_advanced") }}</div>
+
+      <div class="mb-2 mx-2">
+        <div class="flex-1 mb-1">{{ t(":initial_delay") }}</div>
+        <div class="flex">
+          <div class="flex mr-6">
+            <input
+              v-model.number="initialDelay"
+              class="rounded bg-gray-900 px-1 block w-16 mb-1 font-poe text-center"
+            />
+            <span class="ml-2">{{ t("milliseconds") }}</span>
           </div>
         </div>
       </div>
@@ -319,6 +314,10 @@ export default defineComponent({
         () => configWidget.value,
         "rememberCurrency",
       ),
+      rememberListingType: configModelValue(
+        () => configWidget.value,
+        "rememberListingType",
+      ),
       coreCurrency: configModelValue(() => configWidget.value, "coreCurrency"),
       currencyVolume: configModelValue(
         () => configWidget.value,
@@ -359,22 +358,20 @@ export default defineComponent({
         () => configWidget.value,
         "itemHoverTooltip",
       ),
-      autoFillEmptyRuneSockets: configModelValue(
-        () => configWidget.value,
-        "autoFillEmptyRuneSockets",
-      ),
       alwaysShowTier: configModelValue(
         () => configWidget.value,
         "alwaysShowTier",
       ),
-      openItemEditorAbove: configModelValue(
-        () => configWidget.value,
-        "openItemEditorAbove",
-      ),
-      travelButtonEnable: configModelValue(
-        () => configWidget.value,
-        "travelButtonEnable",
-      ),
+      initialDelay: computed<number>({
+        get() {
+          return configWidget.value.initialDelay;
+        },
+        set(value) {
+          if (typeof value !== "number") return;
+
+          configWidget.value.initialDelay = Math.min(Math.max(value, 5), 400);
+        },
+      }),
       getAugmentNameByRef,
     };
   },

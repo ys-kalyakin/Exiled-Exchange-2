@@ -54,9 +54,11 @@ export const ARMOUR_STATS = new Set<string>([
   ...QUALITY_STATS.ARMOUR.flat,
   ...QUALITY_STATS.EVASION.flat,
   ...QUALITY_STATS.ENERGY_SHIELD.flat,
+  ...QUALITY_STATS.WARD.flat,
   ...QUALITY_STATS.ARMOUR.incr,
   ...QUALITY_STATS.EVASION.incr,
   ...QUALITY_STATS.ENERGY_SHIELD.incr,
+  ...QUALITY_STATS.WARD.incr,
   stat("#% increased Block chance"),
 ]);
 
@@ -143,7 +145,30 @@ function armourProps(ctx: FiltersCreationContext) {
     );
   }
 
-  if (item.armourAR || item.armourEV || item.armourES || item.armourBLOCK) {
+  if (item.armourRW) {
+    const runicWard = calcPropBounds(item.armourRW, QUALITY_STATS.WARD, item);
+
+    ctx.filters.push(
+      propToFilter(
+        {
+          ref: "Runic Ward: #",
+          tradeId: "item.runic_ward",
+          roll: runicWard.roll,
+          sources: runicWard.sources,
+          disabled: true,
+        },
+        ctx,
+      ),
+    );
+  }
+
+  if (
+    item.armourAR ||
+    item.armourEV ||
+    item.armourES ||
+    item.armourRW ||
+    item.armourBLOCK
+  ) {
     removeUsedStats(ctx, ARMOUR_STATS);
   }
 }
@@ -466,6 +491,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapMagicMonsters) {
+    // doesn't exist in 0.5.2
     const magicMonsters = calcPropBounds(
       item.mapMagicMonsters,
       { flat: [], incr: [] },
@@ -486,6 +512,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapRareMonsters) {
+    // doesn't exist in 0.5.2
     const rareMonsters = calcPropBounds(
       item.mapRareMonsters,
       { flat: [], incr: [] },
@@ -534,7 +561,7 @@ function mapProps(ctx: FiltersCreationContext) {
     ctx.filters.push(
       propToFilter(
         {
-          ref: "Item Rarity: #%",
+          ref: "Map Item Rarity: #%",
           tradeId: "item.map_item_rarity",
           roll: itemRarity.roll,
           sources: itemRarity.sources,
@@ -546,6 +573,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapGold) {
+    // doesn't exist in 0.5.2
     const gold = calcPropBounds(item.mapGold, { flat: [], incr: [] }, item);
     ctx.filters.push(
       propToFilter(
@@ -560,6 +588,48 @@ function mapProps(ctx: FiltersCreationContext) {
       ),
     );
   }
+
+  if (item.mapMonsterRarity) {
+    const itemRarity = calcPropBounds(
+      item.mapMonsterRarity,
+      { flat: [], incr: [] },
+      item,
+    );
+    ctx.filters.push(
+      propToFilter(
+        {
+          ref: "Monster Rarity: #%",
+          // yes rare monsters replaced trade id
+          tradeId: "item.map_rare_monsters",
+          roll: itemRarity.roll,
+          sources: itemRarity.sources,
+          disabled: true,
+        },
+        ctx,
+      ),
+    );
+  }
+
+  if (item.mapEffectiveness) {
+    const itemRarity = calcPropBounds(
+      item.mapEffectiveness,
+      { flat: [], incr: [] },
+      item,
+    );
+    ctx.filters.push(
+      propToFilter(
+        {
+          ref: "Monster Effectiveness: #%",
+          // yes magic monsters
+          tradeId: "item.map_magic_monsters",
+          roll: itemRarity.roll,
+          sources: itemRarity.sources,
+          disabled: true,
+        },
+        ctx,
+      ),
+    );
+  }
 }
 
 function removeUsedStats(ctx: FiltersCreationContext, stats: Set<string>) {
@@ -567,12 +637,15 @@ function removeUsedStats(ctx: FiltersCreationContext, stats: Set<string>) {
 }
 
 function isSingleAttrArmour(item: ParsedItem) {
-  return true;
-  // return (
-  //   [item.armourAR, item.armourEV, item.armourES].filter(
-  //     (value) => value != null,
-  //   ).length === 1
-  // );
+  return (
+    [item.armourAR, item.armourEV, item.armourES].filter(
+      (value) => value != null,
+    ).length === 1 ||
+    // TODO: figure out if people are actually using hybrid in 2
+    // originally this method was for 1 where people don't touch hybrid,
+    // or when they do they only care about one type
+    true
+  );
 }
 
 function isPdpsImportant(item: ParsedItem) {
@@ -594,7 +667,7 @@ function isPdpsImportant(item: ParsedItem) {
   }
 }
 
-function propToFilter(
+export function propToFilter(
   opts: {
     ref: string;
     tradeId: InternalTradeId;

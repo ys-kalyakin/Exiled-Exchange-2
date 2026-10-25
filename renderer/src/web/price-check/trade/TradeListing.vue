@@ -30,25 +30,16 @@
               <div class="px-2">{{ t(":item_level") }}</div>
             </th>
             <th
-              v-if="
-                item.category === ItemCategory.Gem ||
-                item.category === ItemCategory.UncutGem
-              "
+              v-if="isGem || item.category === ItemCategory.UncutGem"
               class="trade-table-heading"
             >
               <div class="px-2">{{ t(":gem_level") }}</div>
             </th>
-            <th
-              v-if="item.category === ItemCategory.Gem"
-              class="trade-table-heading"
-            >
+            <th v-if="isGem || grantsSkill" class="trade-table-heading">
               <div class="px-2">{{ t(":gem_sockets") }}</div>
             </th>
             <th
-              v-if="
-                (filters.quality && !filters.quality.disabled) ||
-                item.category === ItemCategory.Gem
-              "
+              v-if="(filters.quality && !filters.quality.disabled) || isGem"
               class="trade-table-heading"
             >
               <div class="px-2">{{ t(":quality") }}</div>
@@ -62,12 +53,6 @@
             </th>
             <th v-if="showSeller" class="trade-table-heading w-full">
               <div class="px-2">{{ t(":seller") }}</div>
-            </th>
-            <th
-              v-if="showTravel === 'button'"
-              class="trade-table-heading w-full"
-            >
-              <div class="px-2">{{ t(":travel") }}</div>
             </th>
           </tr>
         </thead>
@@ -84,12 +69,11 @@
               :show-seller="showSeller"
               :item-level="filters.itemLevel"
               :quality="filters.quality"
-              :showTravel="showTravel"
-              @travel-to-hideout="travelToHideout(result.hideoutToken)"
             />
           </template>
         </tbody>
       </table>
+      <!-- LIKELY PRICE FIXED -->
       <div
         v-if="isLikelyPriceFixed"
         class="p-2 border-2 border-gray-600 rounded mt-2"
@@ -107,6 +91,26 @@
           </div>
         </div>
       </div>
+
+      <!-- Extraction Value -->
+      <extraction-value :item="item" :first-result="groupedResults.at(0)" />
+
+      <!-- ADDED AUGMENTS COST -->
+      <!-- <div
+        v-if="addedAugments && addedAugments.length"
+        class="p-2 border-2 border-gray-600 rounded mt-2 flex items-center"
+      >
+        <div class="w-fit">{{ t(":added_augments") }}</div>
+        <div class="flex px-2 items-center">
+          <item-sum-price
+            :items="
+              addedAugments.map((augment) =>
+                augment ? augment.baseItem : null,
+              )
+            "
+          />
+        </div>
+      </div> -->
     </div>
   </div>
   <ui-error-box v-else>
@@ -143,17 +147,30 @@ import { PriceCheckWidget } from "@/web/overlay/interfaces";
 import { ItemFilters, StatFilter } from "../filters/interfaces";
 import { ItemCategory, ParsedItem } from "@/parser";
 import { artificialSlowdown } from "./artificial-slowdown";
+import ItemQuickPrice from "@/web/ui/ItemQuickPrice.vue";
 import OnlineFilter from "./OnlineFilter.vue";
 import TradeLinks from "./TradeLinks.vue";
 import TradeItem from "./TradeItem.vue";
 import { useTradeApi } from "./trade-api";
+import { GEM, GRANTS_REAL_SKILL } from "@/parser/meta";
+import ItemSumPrice from "@/web/ui/ItemSumPrice.vue";
+import ExtractionValue from "./ExtractionValue.vue";
 
 const slowdown = artificialSlowdown(900);
 
 const SHOW_RESULTS = 20;
 
 export default defineComponent({
-  components: { OnlineFilter, TradeLinks, TradeItem, UiErrorBox, UiPopover },
+  components: {
+    ExtractionValue,
+    ItemQuickPrice,
+    ItemSumPrice,
+    OnlineFilter,
+    TradeLinks,
+    TradeItem,
+    UiErrorBox,
+    UiPopover,
+  },
   props: {
     filters: {
       type: Object as PropType<ItemFilters>,
@@ -178,8 +195,7 @@ export default defineComponent({
       { immediate: true },
     );
 
-    const { error, searchResult, groupedResults, search, whisper } =
-      useTradeApi();
+    const { error, searchResult, groupedResults, search } = useTradeApi();
 
     const showBrowser = inject<(url: string) => void>("builtin-browser")!;
 
@@ -247,22 +263,19 @@ export default defineComponent({
         return undefined;
       }),
       showSeller: computed(() => widget.value.showSeller),
-      showTravel: computed(() => {
-        if (groupedResults.value.some((res) => res.hideoutToken)) {
-          return widget.value.travelButtonEnable;
-        }
-        return "disabled";
-      }),
       makeTradeLink,
       openTradeLink() {
         showBrowser(makeTradeLink());
       },
-      travelToHideout(token?: string) {
-        whisper(token);
-      },
       // Shift key state and methods
       isShiftPressed,
       ItemCategory,
+      isGem: computed(
+        () => props.item.category && GEM.has(props.item.category),
+      ),
+      grantsSkill: computed(
+        () => props.item.category && GRANTS_REAL_SKILL.has(props.item.category),
+      ),
       isLikelyPriceFixed: computed(() => {
         // if it isn't filling listings it probably is fine
         if (groupedResults.value.length <= 15) {
@@ -273,9 +286,11 @@ export default defineComponent({
             // is a common currency
             /chaos|exalted|divine/i.test(res.priceCurrency) ||
             // is a common very low value currency (but not enhanced versions)
-            res.priceCurrency === "aug" ||
-            res.priceCurrency === "regal" ||
-            res.priceCurrency === "transmute"
+            // NOTE: BECAUSE WE CANT HAVE NICE THINGS HERE
+            ((res.priceCurrency === "aug" ||
+              res.priceCurrency === "regal" ||
+              res.priceCurrency === "transmute") &&
+              res.priceAmount < 30)
           );
         });
         if (commonCurrencyPrices.length < 5) {
@@ -283,6 +298,11 @@ export default defineComponent({
         }
 
         return false;
+      }),
+      addedAugments: computed(() => {
+        return props.item.augmentSockets?.augments.filter(
+          (i) => i && !i.existing,
+        );
       }),
     };
   },

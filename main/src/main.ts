@@ -24,7 +24,7 @@ if (!app.requestSingleInstanceLock()) {
 if (process.platform !== "darwin") {
   app.disableHardwareAcceleration();
 }
-if (process.platform != 'linux') {
+if (process.platform !== "linux") {
   app.enableSandbox();
 } else {
   app.commandLine.appendSwitch("ozone-platform-hint", "x11");
@@ -70,13 +70,13 @@ let tray: AppTray;
   app.on("ready", async () => {
     tray = new AppTray(eventPipe);
     const logger = new Logger(eventPipe);
-    const gameLogWatcher = new GameLogWatcher(eventPipe, logger);
     const gameConfig = new GameConfig(eventPipe, logger);
     const poeWindow = new GameWindow();
     const appUpdater = new AppUpdater(eventPipe);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _httpProxy = new HttpProxy(server, logger);
     const fileWriter = new FileWriter(eventPipe, logger);
+    const gameLogWatcher = new GameLogWatcher(eventPipe, logger, fileWriter);
 
     if (process.env.VITE_DEV_SERVER_URL) {
       try {
@@ -109,7 +109,11 @@ let tray: AppTray;
         eventPipe.onEventAnyClient(
           "CLIENT->MAIN::update-host-config",
           (cfg) => {
-            overlay.updateOpts(cfg.overlayKey, cfg.windowTitle);
+            overlay.updateOpts(
+              cfg.overlayKey,
+              cfg.windowTitle,
+              cfg.hideOverlayOnBlur,
+            );
             shortcuts.updateActions(
               cfg.shortcuts,
               cfg.stashScroll,
@@ -117,6 +121,7 @@ let tray: AppTray;
               cfg.restoreClipboard,
               cfg.language,
             );
+            shortcuts.updateDelay(cfg.initialDelay);
             gameLogWatcher.restart(cfg.clientLog ?? "", cfg.readClientLog);
             gameConfig.readConfig(cfg.gameConfig ?? "");
             appUpdater.checkAtStartup();

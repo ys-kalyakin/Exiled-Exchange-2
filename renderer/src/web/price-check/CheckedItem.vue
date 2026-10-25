@@ -12,7 +12,6 @@
       :presets="presets"
       @preset="selectPreset"
       @submit="doSearch = true"
-      :rebuild-key="rebuildKey"
     />
     <trade-listing
       v-if="tradeAPI === 'trade' && doSearch"
@@ -39,7 +38,7 @@
     </div>
     <stack-value :filters="itemFilters" :item="item" />
     <div v-if="showSupportLinks" class="mt-auto border border-dashed p-2">
-      <div class="mb-1">
+      <!-- <div class="mb-1">
         {{ t("Support development on") }}
         <a
           href="https://patreon.com/awakened_poe_trade"
@@ -47,14 +46,8 @@
           target="_blank"
           ><img class="inline h-5" src="/images/Patreon.svg"
         /></a>
-      </div>
+      </div> -->
       <i18n-t keypath="app.thanks_3rd_party" tag="div">
-        <a
-          href="https://poeprices.info"
-          target="_blank"
-          class="bg-gray-900 px-1 rounded"
-          >poeprices.info</a
-        >
         <a
           href="https://poe.ninja/support"
           target="_blank"
@@ -126,10 +119,6 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
-    rebuildKey: {
-      type: Number,
-      required: true,
-    },
   },
   setup(props, ctx) {
     const widget = computed(() => AppConfig<PriceCheckWidget>("price-check")!);
@@ -162,6 +151,10 @@ export default defineComponent({
         performance.mark("checked-item-item-changed");
         const prevCurrency =
           presets.value != null ? itemFilters.value.trade.currency : undefined;
+        const prevListingType =
+          presets.value != null
+            ? itemFilters.value.trade.listingType
+            : undefined;
 
         presets.value = createPresets(item, {
           league: leagues.selectedId.value!,
@@ -179,8 +172,10 @@ export default defineComponent({
               item.info.refName === prevItem.info.refName)
               ? prevCurrency
               : undefined,
+          listingType: widget.value.rememberListingType
+            ? prevListingType
+            : undefined,
           defaultAllSelected: widget.value.defaultAllSelected,
-          autoFillEmptyAugmentSockets: widget.value.autoFillEmptyRuneSockets,
         });
 
         if (
@@ -191,7 +186,6 @@ export default defineComponent({
         } else {
           doSearch.value = Boolean(
             item.rarity === ItemRarity.Unique ||
-              item.category === ItemCategory.Map ||
               item.category === ItemCategory.HeistBlueprint ||
               item.category === ItemCategory.SanctumRelic ||
               item.category === ItemCategory.Charm ||

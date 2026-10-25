@@ -7,8 +7,13 @@ import type {
   Stat,
   StatMatcher,
   TranslationDict,
+  AugmentGroup,
+  CatalystGroup,
 } from "./interfaces";
 import { loadClientStrings } from "../client-string-loader";
+import { useTradeData } from "@/web/background/TradeData";
+import { GEM, ItemCategory } from "@/parser/meta";
+import { ItemRarity } from "@/parser/ParsedItem";
 
 export * from "./interfaces";
 
@@ -19,41 +24,73 @@ export let APP_PATRONS: Array<{ from: string; months: number; style: number }>;
 export let AUGMENT_DATA_BY_AUGMENT: AugmentDataByAugment;
 export let AUGMENT_DATA_BY_TRADE_ID: AugmentDataByTradeId;
 
-export let AUGMENT_LIST: BaseType[];
 export const HIGH_VALUE_AUGMENTS_HARDCODED = new Set<string>([]);
+export let GROUPED_AUGMENTS: AugmentGroup<BaseType> = {
+  Rune: {
+    Lesser: [],
+    Normal: [],
+    Greater: [],
+    Perfect: [],
+    Other: [],
+  },
+  Legacy: [],
+  SoulCore: {
+    Normal: [],
+    Special: [],
+  },
+  Idol: [],
+  Other: [],
+};
+export let CATALYST_TYPES: CatalystGroup<BaseType[]> = {
+  Normal: [],
+  Refined: [],
+};
 
-export let ITEM_BY_TRANSLATED = (
+export let CATALYST_TO_TAG: Record<string, string[]> = {};
+export let TAG_TO_CATALYST: Record<string, string> = {};
+
+export let ITEM_BY_TRANSLATED: (
   ns: BaseType["namespace"],
   name: string,
-): BaseType[] | undefined => undefined;
-export let ITEM_BY_REF = (
+) => BaseType[] | undefined = () => undefined;
+export let ITEM_BY_REF: (
   ns: BaseType["namespace"],
   name: string,
-): BaseType[] | undefined => undefined;
-export let ITEMS_ITERATOR = function* (
+) => BaseType[] | undefined = () => undefined;
+export let ITEMS_ITERATOR: (
   includes: string,
   andIncludes?: string[],
-): Generator<BaseType> {};
+) => Generator<BaseType> = function* () {};
 
-export let ALTQ_GEM_NAMES = function* (): Generator<string> {};
-export let REPLICA_UNIQUE_NAMES = function* (): Generator<string> {};
+export let GEM_NS_NAMES: () => Generator<string> = function* () {};
+export let UNIQUE_NS_NAMES: () => Generator<string> = function* () {};
+export let ITEM_NS_NAMES: () => Generator<string> = function* () {};
 
 export let TRADE_TAG_TO_REF = new Map<string, string>();
 
-export let STAT_BY_MATCH_STR = (
+export let STAT_BY_MATCH_STR: (
   name: string,
-): { matcher: StatMatcher; stat: Stat } | undefined => undefined;
-export let STAT_BY_REF = (name: string): Stat | undefined => undefined;
-export let STATS_ITERATOR = function* (
+) => { matcher: StatMatcher; stat: Stat } | undefined = () => undefined;
+export let STAT_BY_REF: (name: string) => Stat | undefined = () => undefined;
+export let STATS_ITERATOR: (
   includes: string,
   andIncludes?: string[],
-): Generator<Stat> {};
+) => Generator<Stat> = function* () {};
 
-let localAugmentFilter: (
-  value: BaseType,
-  index: number,
-  array: BaseType[],
-) => unknown = (value: BaseType, index: number, array: BaseType[]) => true;
+export let TRADE_ITEM_BY_REF: (
+  itemQuery: {
+    baseType?: string;
+    name?: string;
+    rarity?: ItemRarity;
+    category?: ItemCategory;
+  },
+  forceCraftable?: boolean,
+) => BaseType[] | undefined = () => undefined;
+
+export let TRADE_STAT_BY_STAT_ID: (tradeId: string) => boolean = () => false;
+export let TRADE_STAT_BY_MATCH_STR: (
+  name: string,
+) => { [type: string]: string[] } | undefined = () => undefined;
 
 function dataBinarySearch(
   data: Uint32Array,
@@ -117,10 +154,11 @@ function itemNamesFromLines(items: Generator<BaseType>) {
   };
 }
 
-async function loadItems(language: string, isTest = false) {
+async function loadItems(language: string) {
   const ndjson = await (
     await fetch(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)
   ).text();
+
   const INDEX_WIDTH = 2;
   const indexNames = new Uint32Array(
     await (
@@ -169,12 +207,9 @@ async function loadItems(language: string, isTest = false) {
   ITEM_BY_TRANSLATED = commonFind(indexNames, "name");
   ITEM_BY_REF = commonFind(indexRefNames, "refName");
   ITEMS_ITERATOR = ndjsonFindLines<BaseType>(ndjson);
-  ALTQ_GEM_NAMES = itemNamesFromLines(
-    ITEMS_ITERATOR('altQuality":["Anomalous'),
-  );
-  REPLICA_UNIQUE_NAMES = itemNamesFromLines(
-    ITEMS_ITERATOR('refName":"Replica'),
-  );
+  GEM_NS_NAMES = itemNamesFromLines(ITEMS_ITERATOR('": "GEM"'));
+  UNIQUE_NS_NAMES = itemNamesFromLines(ITEMS_ITERATOR('": "UNIQUE"'));
+  ITEM_NS_NAMES = itemNamesFromLines(ITEMS_ITERATOR('": "ITEM"'));
 
   TRADE_TAG_TO_REF = new Map<string, string>();
   for (const item of ITEMS_ITERATOR('"tradeTag":')) {
@@ -182,10 +217,11 @@ async function loadItems(language: string, isTest = false) {
   }
 }
 
-async function loadStats(language: string, isTest = false) {
+async function loadStats(language: string) {
   const ndjson = await (
     await fetch(`${import.meta.env.BASE_URL}data/${language}/stats.ndjson`)
   ).text();
+
   const INDEX_WIDTH = 2;
   const indexRef = new Uint32Array(
     await (
@@ -247,7 +283,7 @@ export function stat(text: string) {
   return text;
 }
 
-export async function init(lang: string, isTest = false) {
+export async function init(lang: string) {
   CLIENT_STRINGS_REF = await loadClientStrings("en");
   ITEM_DROP = await (
     await fetch(`${import.meta.env.BASE_URL}data/item-drop.json`)
@@ -256,7 +292,7 @@ export async function init(lang: string, isTest = false) {
     await fetch(`${import.meta.env.BASE_URL}data/patrons.json`)
   ).json();
 
-  await loadForLang(lang, isTest);
+  await loadForLang(lang);
 
   let failed = false;
   const missing = [];
@@ -279,35 +315,76 @@ export async function init(lang: string, isTest = false) {
   DELAYED_STAT_VALIDATION.clear();
 }
 
-export function setLocalAugmentFilter(
-  filter: (value: BaseType, index: number, array: BaseType[]) => unknown,
-) {
-  localAugmentFilter = filter;
-}
-
-export async function loadForLang(lang: string, isTest = false) {
+export async function loadForLang(lang: string) {
   CLIENT_STRINGS = await loadClientStrings(lang);
   await loadItems(lang);
   await loadStats(lang);
-  loadUltraLateItems(localAugmentFilter);
+  loadUltraLateItems();
+  await loadTradeData();
 }
 
-export function loadUltraLateItems(
-  augmentFilter: (value: BaseType, index: number, array: BaseType[]) => unknown,
-) {
+export function loadUltraLateItems() {
+  // Augments
   const a = Array.from(ITEMS_ITERATOR('"craftable": {"category": "SoulCore"}'));
   const b = a.filter((r) => r.augment && r.augment.some((s) => s.tradeId));
-  const c = b.map((r) => ({
+  const augmentList = b.map((r) => ({
     ...r,
     augment: r.augment!.filter((s) => s.tradeId),
   }));
-  const d = c.filter(augmentFilter);
 
-  AUGMENT_LIST = d;
+  AUGMENT_DATA_BY_AUGMENT = augmentsToLookup(augmentList);
 
-  AUGMENT_DATA_BY_AUGMENT = augmentsToLookup(AUGMENT_LIST);
+  AUGMENT_DATA_BY_TRADE_ID = augmentsToLookupTradeId(augmentList);
 
-  AUGMENT_DATA_BY_TRADE_ID = augmentsToLookupTradeId(AUGMENT_LIST);
+  GROUPED_AUGMENTS = groupAugments(augmentList);
+
+  // Catalysts
+  const normalCatalysts = Array.from(ITEMS_ITERATOR('"tags": ["catalyst"'));
+  const refinedCatalysts = Array.from(
+    ITEMS_ITERATOR('"tags": ["jewel_catalyst"'),
+  );
+
+  CATALYST_TYPES = {
+    Normal: normalCatalysts,
+    Refined: refinedCatalysts,
+  };
+
+  CATALYST_TO_TAG = {
+    life_catalyst: [CLIENT_STRINGS.LIFE_TAG],
+    mana_catalyst: [CLIENT_STRINGS.MANA_TAG],
+    defences_catalyst: [
+      CLIENT_STRINGS.ARMOUR_TAG,
+      CLIENT_STRINGS.EVASION_TAG,
+      CLIENT_STRINGS.ENERGY_SHIELD_TAG,
+    ],
+    physical_catalyst: [CLIENT_STRINGS.PHYSICAL_TAG],
+    fire_catalyst: [CLIENT_STRINGS.FIRE_TAG],
+    cold_catalyst: [CLIENT_STRINGS.COLD_TAG],
+    lightning_catalyst: [CLIENT_STRINGS.LIGHTNING_TAG],
+    chaos_catalyst: [CLIENT_STRINGS.CHAOS_TAG],
+    attack_catalyst: [CLIENT_STRINGS.ATTACK_TAG],
+    caster_catalyst: [CLIENT_STRINGS.CASTER_TAG],
+    speed_catalyst: [CLIENT_STRINGS.SPEED_TAG],
+    attribute_catalyst: [CLIENT_STRINGS.ATTRIBUTE_TAG],
+    minion_catalyst: [CLIENT_STRINGS.MINION_TAG],
+  };
+  TAG_TO_CATALYST = {
+    [CLIENT_STRINGS.LIFE_TAG]: "life_catalyst",
+    [CLIENT_STRINGS.MANA_TAG]: "mana_catalyst",
+    [CLIENT_STRINGS.ARMOUR_TAG]: "defences_catalyst",
+    [CLIENT_STRINGS.EVASION_TAG]: "defences_catalyst",
+    [CLIENT_STRINGS.ENERGY_SHIELD_TAG]: "defences_catalyst",
+    [CLIENT_STRINGS.PHYSICAL_TAG]: "physical_catalyst",
+    [CLIENT_STRINGS.FIRE_TAG]: "fire_catalyst",
+    [CLIENT_STRINGS.COLD_TAG]: "cold_catalyst",
+    [CLIENT_STRINGS.LIGHTNING_TAG]: "lightning_catalyst",
+    [CLIENT_STRINGS.CHAOS_TAG]: "chaos_catalyst",
+    [CLIENT_STRINGS.ATTACK_TAG]: "attack_catalyst",
+    [CLIENT_STRINGS.CASTER_TAG]: "caster_catalyst",
+    [CLIENT_STRINGS.SPEED_TAG]: "speed_catalyst",
+    [CLIENT_STRINGS.ATTRIBUTE_TAG]: "attribute_catalyst",
+    [CLIENT_STRINGS.MINION_TAG]: "minion_catalyst",
+  };
 }
 
 function augmentsToLookup(augmentList: BaseType[]): AugmentDataByAugment {
@@ -321,7 +398,7 @@ function augmentsToLookup(augmentList: BaseType[]): AugmentDataByAugment {
       if (!augmentDataByAugment[augment.refName]) {
         augmentDataByAugment[augment.refName] = [];
       }
-      augmentDataByAugment[augment.refName].push({
+      augmentDataByAugment[augment.refName]!.push({
         augment: augment.name,
         refName: augment.refName,
         baseStat: text,
@@ -349,7 +426,8 @@ function augmentsToLookupTradeId(
       if (!augmentDataByAugment[tradeId[0]]) {
         augmentDataByAugment[tradeId[0]] = [];
       }
-      augmentDataByAugment[tradeId[0]].push({
+      augmentDataByAugment[tradeId[0]]!.push({
+        refName: augment.refName,
         augment: augment.name,
         baseStat: text,
         values,
@@ -361,6 +439,182 @@ function augmentsToLookupTradeId(
   }
 
   return augmentDataByAugment;
+}
+
+function groupAugments(augmentList: BaseType[]): AugmentGroup<BaseType> {
+  const grouped: AugmentGroup<BaseType> = {
+    Rune: {
+      Lesser: [],
+      Normal: [],
+      Greater: [],
+      Perfect: [],
+      Other: [],
+    },
+    Legacy: [],
+    SoulCore: {
+      Normal: [],
+      Special: [],
+    },
+    Idol: [],
+    Other: [],
+  };
+
+  const normalRunes = new Set(
+    augmentList
+      .map((a) => a.refName)
+      .filter((ref) => {
+        if (!ref.includes("Rune")) return false;
+        if (
+          ref.startsWith("Greater") ||
+          ref.startsWith("Perfect") ||
+          ref.startsWith("Lesser")
+        ) {
+          return false;
+        }
+        const split = ref.split(" ");
+        return split.length === 2 && split[1] === "Rune";
+      }),
+  );
+
+  for (const augment of augmentList) {
+    const ref = augment.refName;
+    if (ref.includes("Rune")) {
+      const split = ref.split(" ");
+      const notFirst = split.slice(1).join(" ");
+      if (normalRunes.has(notFirst) || normalRunes.has(ref)) {
+        if (ref.startsWith("Greater")) {
+          grouped.Rune.Greater.push(augment);
+        } else if (ref.startsWith("Perfect")) {
+          grouped.Rune.Perfect.push(augment);
+        } else if (ref.startsWith("Lesser")) {
+          grouped.Rune.Lesser.push(augment);
+        } else {
+          grouped.Rune.Normal.push(augment);
+        }
+      } else {
+        grouped.Rune.Other.push(augment);
+      }
+    } else if (ref.startsWith("Legacy")) {
+      grouped.Legacy.push(augment);
+    } else if (ref.includes("Soul Core")) {
+      if (ref.startsWith("Soul Core")) {
+        grouped.SoulCore.Normal.push(augment);
+      } else {
+        grouped.SoulCore.Special.push(augment);
+      }
+    } else if (ref.includes("Thesis")) {
+      grouped.SoulCore.Special.push(augment);
+    } else if (ref.includes("Idol")) {
+      grouped.Idol.push(augment);
+    } else {
+      grouped.Other.push(augment);
+    }
+  }
+
+  return grouped;
+}
+
+async function loadTradeData() {
+  const trade = useTradeData();
+  await trade.load(true);
+  if (trade.error.value) {
+    console.error("Failed to load trade data:", trade.error.value);
+    return;
+  }
+
+  TRADE_ITEM_BY_REF = function (
+    itemQuery: {
+      baseType?: string;
+      name?: string;
+      rarity?: ItemRarity;
+      category?: ItemCategory;
+    },
+    forceCraftable?: boolean,
+  ): BaseType[] | undefined {
+    trade.expressInterest();
+
+    const items = trade.tradeItemData.value;
+
+    let base: BaseType | undefined;
+    const { baseType, name, rarity, category } = itemQuery;
+
+    if (category && GEM.has(category)) {
+      if (name && items.has(name)) {
+        base = {
+          name: name,
+          refName: name,
+          namespace: "GEM",
+          icon: "%NOT_FOUND%",
+          tags: [],
+          gem: {},
+        };
+      }
+    } else if (rarity === ItemRarity.Unique) {
+      if (name && items.has(`${name} ${baseType}`)) {
+        base = {
+          name: name,
+          refName: name,
+          namespace: "UNIQUE",
+          icon: "%NOT_FOUND%",
+          tags: [],
+          unique: {
+            base: baseType!,
+          },
+        };
+      }
+    } else if (!baseType) {
+      if (name && items.has(name)) {
+        // TODO: currency works without tradeTag, just ninja only, see if that is fine
+        const craftable = category
+          ? { category }
+          : forceCraftable
+            ? { category: name as ItemCategory }
+            : undefined;
+
+        base = {
+          name: name,
+          refName: name,
+          namespace: "ITEM",
+          icon: "%NOT_FOUND%",
+          tags: [],
+          craftable,
+        };
+      }
+    } else {
+      if (items.has(baseType)) {
+        base = {
+          name: baseType,
+          refName: baseType,
+          namespace: "ITEM",
+          icon: "%NOT_FOUND%",
+          tags: [],
+          craftable: { category: ItemCategory.Unknown },
+        };
+      }
+    }
+
+    return base ? [base] : undefined;
+  };
+
+  TRADE_STAT_BY_STAT_ID = function (tradeId: string) {
+    trade.expressInterest();
+
+    return trade.tradeStatDataSet.value.has(tradeId);
+  };
+
+  TRADE_STAT_BY_MATCH_STR = function (name: string) {
+    trade.expressInterest();
+
+    const statData = trade.tradeStatData.value;
+
+    const stat = statData.get(name);
+    if (!stat) return;
+
+    // never going to write to these, just need to satisfy type
+    return stat as {
+      [x: string]: string[];
+    };
+  };
 }
 
 // Disable since this is export for tests

@@ -10,7 +10,7 @@
     "leagues_failed": "리그 불러오기를 실패하였습니다",
     "leagues_failed_help": "서버가 점검 중인지 확인해주세요. 혹은 \"Browser\" 버튼을 눌러주세요. CAPTCHA를 완료해야할 수도 있습니다.",
     "leagues_failed_help_alt": "아이템 가격 책정을 하시고 오류 설명에 있는 지시를 따라주세요.",
-    "thanks_3rd_party": "이 프로그램은 {0}과 {1}의 도움을 받고 있습니다. 이들을 도우는 것도 고려해주세요.",
+    "thanks_3rd_party": "이 프로그램은 {0}과 {1}의 도움을 받고 있습니다. 이들을 도우는 것도 고려해주세요",
     "toggle_browser_hint": "{0}을 눌러 브라우저나 인게임으로 이동해주세요.",
     "contact_me": "PoE 디스코드들 중 하나를 통해서 저에게 연락하세요",
     "version": "버전 {0}",
@@ -41,6 +41,7 @@
     "armour": "방어도: {0}",
     "evasion_rating": "회피: {0}",
     "energy_shield": "에너지 보호막: {0}",
+    "runic_ward": "룬 수호: {0}",
     "block": "막기 확률: {0}%",
     "total_dps": "DPS: {0}",
     "physical_dps": "물리 DPS: {0}",
@@ -93,8 +94,8 @@
     "rarity_magic": "아이템 희귀도: 마법",
     "map_revives": "부활 횟수: {0}",
     "map_pack_size": "몬스터 무리 규모: +{0}%",
-    "map_magic_monsters": "마법 몬스터: +{0}%",
-    "map_rare_monsters": "희귀 몬스터: +{0}%",
+    "map_magic_monsters": "몬스터 효율: +{0}%",
+    "map_rare_monsters": "몬스터 희귀도: +{0}%",
     "map_drop_chance": "경로석 출현 확률: +{0}%",
     "map_item_rarity": "아이템 희귀도: +{0}%",
     "map_gold": "골드 발견량: +{0}%",
@@ -143,7 +144,7 @@
     "accessory_trinket": "도둑 장신구",
     "sanctum_relic": "성역 유물",
     "tincture": "팅크",
-    "azmeri_charm": "부적",
+    "flask_charm": "부적",
     "weapon_crossbow": "석궁",
     "weapon_spear": "창",
     "weapon_flail": "도리깨",
@@ -380,7 +381,6 @@
     "tip_26": "아이템 가격 옆에 주황색 원형 아이콘은 플레이어가 현재 오프라인 상태임을 뜻합니다.",
     "tip_27": "로그는 세팅에 있는 \"Debug\"에서 확인 가능합니다.",
     "tip_28": "세팅에서 리그를 변경할 수 있습니다.",
-    "tip_29": "세팅에서 채팅 명령어를 추가할 수 있습니다.",
-    "tip_30": "Exiled Exchange 1과 관련된 내용이 아닙니다."
+    "tip_29": "세팅에서 채팅 명령어를 추가할 수 있습니다."
   }
 }

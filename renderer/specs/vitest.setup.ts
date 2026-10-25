@@ -4,9 +4,15 @@ import path from "path";
 import { Headers } from "node-fetch"; // Assuming you are using node-fetch
 import { Config, TipsFrequency } from "@/web/Config";
 
-vi.mock("@/web/Config", async (original) => {
+vi.mock("@/web/Config", async () => {
   return {
-    AppConfig: vi.fn(() => mockConfig),
+    AppConfig: vi.fn((type?: string) => {
+      if (!type) {
+        return mockConfig;
+      } else {
+        return mockConfig.widgets.find((w) => w.wmType === type)!;
+      }
+    }),
     TipsFrequency: {
       Always: 1,
     },
@@ -22,9 +28,9 @@ export const setupClientStringLoaderMock = () => {
 
       try {
         return (await import(/* @vite-ignore */ `${filePath}`)).default;
-      } catch (error: any) {
+      } catch (error: unknown) {
         throw new Error(
-          `Error loading client_strings.js for ${lang}: ${error.message}`,
+          `Error loading client_strings.js for ${lang}: ${(error as Error).message}`,
         );
       }
     }),
@@ -41,7 +47,7 @@ export const setupFetchMock = () => {
       url.replace(import.meta.env.BASE_URL, ""),
     );
 
-    const createResponse = (body: any, status = 200) => ({
+    const createResponse = (body: unknown, status = 200) => ({
       ok: status >= 200 && status < 300,
       status,
       statusText: status === 200 ? "OK" : "Not Found",
@@ -52,10 +58,10 @@ export const setupFetchMock = () => {
       clone: () => createResponse(body, status),
       body: null,
       bodyUsed: false,
-      json: async () => JSON.parse(body),
+      json: async () => JSON.parse(body as string),
       text: async () => body,
-      arrayBuffer: async () => Buffer.from(body).buffer,
-      blob: async () => new Blob([body]),
+      arrayBuffer: async () => body as ArrayBuffer,
+      blob: async () => new Blob([body as string]),
       formData: async () => {
         throw new Error("formData not implemented");
       },
@@ -68,19 +74,52 @@ export const setupFetchMock = () => {
       }
       if (filePath.endsWith(".bin")) {
         const data = fs.readFileSync(filePath);
-        return createResponse(data, 200);
+        return createResponse(
+          data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+          200,
+        );
       }
       if (filePath.endsWith(".json")) {
         const data = fs.readFileSync(filePath, "utf8");
         return createResponse(data, 200);
       }
-    } catch (error) {
+    } catch {
       return createResponse(`File not found: ${filePath}`, 404);
     }
 
     throw new Error(`Unhandled fetch request: ${url}`);
   });
 };
+
+// Mock Host.Proxy calls
+vi.mock("@/web/background/IPC", () => ({
+  Host: {
+    proxy: vi.fn(async (url: string, init?: RequestInit) => {
+      if (
+        url.endsWith("api/trade2/data/stats") ||
+        url.endsWith("api/trade2/data/items")
+      ) {
+        const filePath = path.resolve(__dirname, `data/${url.slice(-5)}.json`);
+        const data = fs.readFileSync(filePath, "utf8");
+        return {
+          ok: true,
+          status: 200,
+          json: async () => JSON.parse(data),
+          text: async () => data,
+        };
+      }
+      return global.fetch(url, init);
+    }),
+    onEvent: vi.fn(() => new AbortController()),
+    sendEvent: vi.fn(),
+    getConfig: vi.fn(async () => null),
+    importFile: vi.fn(async (file: File) => file.name),
+    logs: { value: "" },
+    version: { value: "0.0.00000" },
+    updateInfo: { value: { state: "initial" } },
+    isElectron: true,
+  },
+}));
 
 export const defaultConfigMock = (overrides: Partial<Config> = {}) => {
   const defaultConfig: Config = {
@@ -99,7 +138,19 @@ export const defaultConfigMock = (overrides: Partial<Config> = {}) => {
     language: "en", // Default language
     preferredTradeSite: "default",
     realm: "pc-ggg",
-    widgets: [],
+    widgets: [
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      {
+        wmId: 2,
+        wmType: "price-check",
+        wmTitle: "",
+        wmWants: "hide",
+        wmZorder: "exclusive",
+        wmFlags: ["hide-on-blur", "menu::skip"],
+        savedAugments: {},
+      } as any,
+      /* eslint-enable */
+    ],
     fontSize: 12,
     showAttachNotification: true,
     overlayAlwaysClose: false,
@@ -107,6 +158,7 @@ export const defaultConfigMock = (overrides: Partial<Config> = {}) => {
     alphas: [],
     tipsFrequency: TipsFrequency.Always,
     readClientLog: false,
+    hideOverlayOnBlur: false,
   };
 
   mockConfig = { ...defaultConfig, ...overrides };

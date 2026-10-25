@@ -16,6 +16,7 @@ import {
 } from "./items";
 import { init } from "@/assets/data";
 import { ItemCategory, ItemRarity, ParsedItem } from "@/parser";
+import { ModifierType } from "@/parser/modifiers";
 
 describe("[e2e] parseModifiers", () => {
   beforeEach(async () => {
@@ -148,9 +149,7 @@ describe("[e2e] parseModifiers", () => {
       const res = __testExports.parseModifiers(sections[section], parsedItem);
       expect(res).toBe("SECTION_PARSED");
       expect(parsedItem.newMods.length).toBe(expectedCount);
-      expect(parsedItem.unknownModifiers.length).toBe(
-        testItem.category === ItemCategory.Shield ? 1 : 0,
-      );
+      expect(parsedItem.unknownModifiers.length).toBe(0);
     },
   );
 });
@@ -192,6 +191,9 @@ Loads an additional bolt
 
     const res = __testExports.parseModifiers(section.split("\n"), parsedItem);
     expect(res).toBe("SECTION_PARSED");
+    expect(parsedItem.newMods.length).toBe(1);
+    expect(parsedItem.unknownModifiers.length).toBe(0);
+    expect(parsedItem.newMods[0].info.type).toBe(ModifierType.Implicit);
   });
 
   it("Should parse granted skill modifiers", () => {
@@ -200,6 +202,9 @@ Loads an additional bolt
 
     const res = __testExports.parseModifiers(section.split("\n"), parsedItem);
     expect(res).toBe("SECTION_PARSED");
+    expect(parsedItem.newMods.length).toBe(1);
+    expect(parsedItem.unknownModifiers.length).toBe(0);
+    expect(parsedItem.newMods[0].info.type).toBe(ModifierType.Skill);
   });
 
   it("Should parse augment modifiers", () => {
@@ -209,13 +214,28 @@ Gain 24 Mana per enemy killed (rune)
 
     const res = __testExports.parseModifiers(section.split("\n"), parsedItem);
     expect(res).toBe("SECTION_PARSED");
+    expect(parsedItem.newMods.length).toBe(1);
+    expect(parsedItem.unknownModifiers.length).toBe(0);
+    expect(parsedItem.newMods[0].info.type).toBe(ModifierType.Augment);
   });
 
-  it("Should parse rune modifiers", () => {
+  it("Should parse enchant modifiers", () => {
     const section = `45% increased Elemental Damage with Attacks (enchant)
 `;
 
     const res = __testExports.parseModifiers(section.split("\n"), parsedItem);
     expect(res).toBe("SECTION_PARSED");
+  });
+
+  it("Should parse new enchant modifiers", () => {
+    const section = `{ Enhancement }
+Allocates Core of the Guardian — Unscalable Value
+`;
+
+    const res = __testExports.parseModifiers(section.split("\n"), parsedItem);
+    expect(res).toBe("SECTION_PARSED");
+    expect(parsedItem.newMods.length).toBe(1);
+    expect(parsedItem.unknownModifiers.length).toBe(0);
+    expect(parsedItem.newMods[0].info.type).toBe(ModifierType.Enchant);
   });
 });

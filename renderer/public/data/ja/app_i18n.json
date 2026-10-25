@@ -12,7 +12,7 @@
     "leagues_failed": "リーグの読み込みに失敗しました",
     "leagues_failed_help": "レルムがメンテナンス中でないことを確認してください。また「ブラウザ」ボタンをクリックしてみてください。そこでCAPTCHAを完了する必要があるかもしれません。",
     "leagues_failed_help_alt": "アイテムの価格チェックを行い、エラーの説明に従ってください。",
-    "thanks_3rd_party": "このツールは {0} と {1} に依存しています、ぜひ支援することを検討ください。",
+    "thanks_3rd_party": "このツールは {0} と {1} に依存しています、ぜひ支援することを検討ください",
     "toggle_browser_hint": "ブラウザとゲームを切り替えるには {0} を押してください。",
     "contact_me": "PoE Discordで私に連絡してください",
     "version": "バージョン {0}",
@@ -43,6 +43,7 @@
     "armour": "アーマー: {0}",
     "evasion_rating": "回避力: {0}",
     "energy_shield": "エナジーシールド: {0}",
+    "runic_ward": "ルーンワード: {0}",
     "block": "ブロック率: {0}%",
     "total_dps": "DPS: {0}",
     "physical_dps": "物理DPS: {0}",
@@ -99,8 +100,8 @@
     "rarity_magic": "レアリティ: マジック",
     "map_revives": "復活が利用可能: {0}",
     "map_pack_size": "モンスターパックサイズ: +{0}%",
-    "map_magic_monsters": "マジックモンスター: +{0}%",
-    "map_rare_monsters": "レアモンスター: +{0}%",
+    "map_magic_monsters": "モンスターエフェクティブ: +{0}%",
+    "map_rare_monsters": "モンスターレアリティ: +{0}%",
     "map_drop_chance": "ウェイストーンドロップ確率: +{0}%",
     "map_item_rarity": "アイテムレアリティ: +{0}%",
     "map_gold": "見つかるゴールド: +{0}%",
@@ -149,7 +150,7 @@
     "accessory_trinket": "トリンケット",
     "sanctum_relic": "サンクタムレリック",
     "tincture": "チンキ",
-    "azmeri_charm": "チャーム",
+    "flask_charm": "チャーム",
     "weapon_crossbow": "クロスボウ",
     "weapon_spear": "槍",
     "weapon_flail": "フレイル",
@@ -412,7 +413,6 @@
     "tip_26": "アイテム価格の横にある赤色の丸は、そのプレイヤーがオフライン状態であることを示します",
     "tip_27": "ログは設定の\"Debug\"タブで確認できます",
     "tip_28": "設定でリーグを変更できます",
-    "tip_29": "設定でカスタムチャットコマンドのホットキーを追加できます",
-    "tip_30": "Exiled Exchange 1のことは話しません"
+    "tip_29": "設定でカスタムチャットコマンドのホットキーを追加できます"
   }
 }

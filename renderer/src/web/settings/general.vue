@@ -11,6 +11,7 @@
         <option value="de">Deutsch</option>
         <option value="es">Español</option>
         <option value="pt">Português (Brasil)</option>
+        <option value="fr">Français</option>
       </select>
     </div>
     <div class="mb-4" v-if="language !== 'en'">
@@ -85,6 +86,12 @@
     <ui-checkbox class="mb-4" v-model="overlayAlwaysClose">{{
       t(":overlay_always_close")
     }}</ui-checkbox>
+    <ui-checkbox class="mb-1" v-model="hideOverlayOnBlur">{{
+      t(":hide_overlay_on_blur")
+    }}</ui-checkbox>
+    <div class="italic text-gray-500 mb-4">
+      {{ t(":hide_overlay_on_blur_hint") }}
+    </div>
     <div class="mb-4">
       <div class="flex-1 mb-1">
         {{ t(":window_title") }}
@@ -181,7 +188,7 @@ export default defineComponent({
               ? "pathofexile.tw"
               : "www.pathofexile.com";
           case "ko":
-            return "poe.game.daum.net";
+            return "poe.kakaogames.com";
           case "ja":
             return "jp.pathofexile.com";
           case "de":
@@ -190,6 +197,8 @@ export default defineComponent({
             return "es.pathofexile.com";
           case "pt":
             return "br.pathofexile.com";
+          case "fr":
+            return "fr.pathofexile.com";
         }
       }),
       preferredTradeSite: computed<typeof props.config.preferredTradeSite>({
@@ -214,6 +223,10 @@ export default defineComponent({
       overlayAlwaysClose: configModelValue(
         () => props.config,
         "overlayAlwaysClose",
+      ),
+      hideOverlayOnBlur: configModelValue(
+        () => props.config,
+        "hideOverlayOnBlur",
       ),
       windowTitle: configModelValue(() => props.config, "windowTitle"),
       enableAlphas: configModelValue(() => props.config, "enableAlphas"),

@@ -4,7 +4,18 @@ import { Host } from "@/web/background/IPC";
 import { useLeagues } from "./Leagues";
 import { AppConfig } from "../Config";
 import { PriceCheckWidget } from "../overlay/widgets";
-import { ITEM_BY_REF } from "@/assets/data";
+import { DropEntry, ITEM_BY_REF } from "@/assets/data";
+
+export type NinjaSchema = NinjaSchemaV1;
+type NinjaSchemaV1 = {
+  schemaVersion: 1;
+  map: Array<{
+    ns: "ITEM" | "GEM" | "UNIQUE";
+    cx: boolean;
+    url: string;
+    type: string;
+  }>;
+};
 
 interface NinjaDenseExchangeInfo {
   name: string;
@@ -101,6 +112,9 @@ export const DivCurrency: CoreCurrency = {
 export const usePoeninja = createGlobalState(() => {
   const leagues = useLeagues();
 
+  // TODO: move out of here
+  const ITEM_DROP = shallowRef<DropEntry[]>([]);
+
   const availableCoreCurrencies = shallowRef<CoreCurrency[]>([]);
   const selectedCoreCurrencyId = computed<"exalted" | "chaos">({
     get() {
@@ -139,10 +153,7 @@ export const usePoeninja = createGlobalState(() => {
   let downloadController: AbortController | undefined;
   let lastInterestTime = 0;
 
-  let priceCache = new Map<
-    { ns: string; name: string; count: number },
-    CurrencyValue
-  >();
+  let priceCache = new Map<string, CurrencyValue>();
 
   async function load(force: boolean = false) {
     const league = leagues.selected.value;
@@ -158,6 +169,12 @@ export const usePoeninja = createGlobalState(() => {
       isLoading.value = true;
       downloadController = new AbortController();
 
+      ITEM_DROP.value = JSON.parse(
+        await Host.proxy("api.exiledexchange2.dev/proxy/data/item-drop.json", {
+          signal: downloadController.signal,
+        }).then((r) => r.text()),
+      );
+
       availableCoreCurrencies.value = getAvailableCoreCurrencies().map(
         (currency) => ({
           ...currency,
@@ -171,6 +188,14 @@ export const usePoeninja = createGlobalState(() => {
         selectedCoreCurrencyId.value = "exalted";
       }
 
+      const ninjaSchema: NinjaSchema = JSON.parse(
+        await Host.proxy(
+          "api.exiledexchange2.dev/proxy/data/namespaceMap.json",
+          {
+            signal: downloadController.signal,
+          },
+        ).then((r) => r.text()),
+      );
       const response = await Host.proxy(
         `api.exiledexchange2.dev/proxy/${selectedLeagueToUrl(true)}/overviewData.json`,
         {
@@ -181,7 +206,7 @@ export const usePoeninja = createGlobalState(() => {
 
       const ninjaXchg = parseXchg(jsonBlob);
 
-      PRICES_DB = splitJsonBlob(jsonBlob);
+      PRICES_DB = splitJsonBlob(jsonBlob, ninjaSchema);
 
       // TODO: update to search for requested currency instead of divine
       const divineRates = ninjaXchg.rates;
@@ -202,10 +227,7 @@ export const usePoeninja = createGlobalState(() => {
       }
 
       // Clear cache
-      priceCache = new Map<
-        { ns: string; name: string; count: number },
-        CurrencyValue
-      >();
+      priceCache = new Map<string, CurrencyValue>();
 
       lastUpdateTime = Date.now();
     } catch (e) {
@@ -228,10 +250,15 @@ export const usePoeninja = createGlobalState(() => {
       case "Hardcore":
         return "hardcore";
     }
-    if (league.startsWith("HC ")) {
-      return proxy ? "leaguehc" : "vaalhc";
+    if (proxy) {
+      return league;
     }
-    return proxy ? "league" : "vaal";
+
+    const ninjaLeague = league.toLowerCase().replaceAll(" ", "");
+    if (ninjaLeague.startsWith("hc")) {
+      return ninjaLeague.slice(2) + "hc";
+    }
+    return ninjaLeague;
   }
 
   function findPriceByQuery(query: DbQuery) {
@@ -319,7 +346,8 @@ export const usePoeninja = createGlobalState(() => {
   }
 
   function cachedCurrencyByQuery(query: DbQuery, count: number) {
-    const key = { ns: query.ns, name: query.name, count };
+    // variant should always be undefined for currencies
+    const key = `${query.ns}:${query.name}:${query.variant ?? ""}:${count}`;
     if (priceCache.has(key)) {
       return priceCache.get(key)!;
     }
@@ -331,6 +359,78 @@ export const usePoeninja = createGlobalState(() => {
     const currency = autoCurrency(price.primaryValue * count);
     priceCache.set(key, currency);
     return currency;
+  }
+
+  function toDivine(value: CurrencyValue): CurrencyValue {
+    if (value.currency === "div") return value;
+    if (xchgRate.value) {
+      if (xchgRateCurrency.value !== value.currency) {
+        throw new Error(
+          `Cannot convert ${value.currency} to div, current core currency is ${xchgRateCurrency.value}`,
+        );
+      }
+
+      return {
+        min: value.min / xchgRate.value,
+        max: value.max / xchgRate.value,
+        currency: "div",
+      };
+    }
+    return value;
+  }
+
+  function addPrice(
+    addend1: CurrencyValue,
+    addend2: CurrencyValue,
+  ): CurrencyValue {
+    const addend1Div = toDivine(addend1);
+    const addend2Div = toDivine(addend2);
+
+    return autoCurrency([
+      addend1Div.min + addend2Div.min,
+      addend1Div.max + addend2Div.max,
+    ]);
+  }
+
+  function subtractPrice(
+    minuend: CurrencyValue,
+    subtrahend: CurrencyValue,
+  ): CurrencyValue {
+    const minuendDiv = toDivine(minuend);
+    const subtrahendDiv = toDivine(subtrahend);
+
+    return autoCurrency([
+      minuendDiv.min - subtrahendDiv.max,
+      minuendDiv.max - subtrahendDiv.min,
+    ]);
+  }
+
+  function comparePrice(
+    left: CurrencyValue,
+    op: ">" | ">=" | "==" | "===" | "<=" | "<",
+    right: CurrencyValue,
+  ): boolean {
+    const leftDiv = toDivine(left);
+    const rightDiv = toDivine(right);
+
+    switch (op) {
+      case ">":
+        return leftDiv.min > rightDiv.max;
+      case ">=":
+        return leftDiv.min >= rightDiv.max;
+      case "==":
+        return leftDiv.min === rightDiv.max && leftDiv.max === rightDiv.min;
+      case "===":
+        return (
+          left.currency === right.currency &&
+          leftDiv.min === rightDiv.max &&
+          leftDiv.max === rightDiv.min
+        );
+      case "<=":
+        return leftDiv.max <= rightDiv.min;
+      case "<":
+        return leftDiv.max < rightDiv.min;
+    }
   }
 
   setInterval(() => {
@@ -360,6 +460,11 @@ export const usePoeninja = createGlobalState(() => {
     cachedCurrencyByQuery,
     initialLoading: () => isLoading.value && !PRICES_DB.length,
     availableCoreCurrencies: readonly(availableCoreCurrencies),
+    ITEM_DROP,
+    // math
+    addPrice,
+    subtractPrice,
+    comparePrice,
   };
 });
 
@@ -371,33 +476,18 @@ function parseXchg(jsonBlob: string): NinjaXchgRates {
   return JSON.parse(jsonBlob.slice(startPos, endPos));
 }
 
-function splitJsonBlob(jsonBlob: string): PriceDatabase {
+function splitJsonBlob(jsonBlob: string, schema: NinjaSchema): PriceDatabase {
   const NINJA_OVERVIEW = '{"type":"';
+  if (schema.schemaVersion !== 1) {
+    console.warn("Unsupported ninja schema version", schema.schemaVersion);
+    return [];
+  }
   const NAMESPACE_MAP: Array<{
     ns: string;
     cx: boolean;
     url: string;
     type: string;
-  }> = [
-    { ns: "ITEM", cx: true, url: "currency", type: "Currency" },
-    { ns: "ITEM", cx: true, url: "fragments", type: "Fragments" },
-    { ns: "ITEM", cx: true, url: "abyssal-bones", type: "Abyss" },
-    { ns: "ITEM", cx: true, url: "uncut-gems", type: "UncutGems" },
-    {
-      ns: "GEM",
-      cx: true,
-      url: "lineage-support-gems",
-      type: "LineageSupportGems",
-    },
-    { ns: "ITEM", cx: true, url: "essences", type: "Essences" },
-    { ns: "ITEM", cx: true, url: "soul-cores", type: "Ultimatum" },
-    { ns: "ITEM", cx: true, url: "idols", type: "Idols" },
-    { ns: "ITEM", cx: true, url: "runes", type: "Runes" },
-    { ns: "ITEM", cx: true, url: "omens", type: "Ritual" },
-    { ns: "ITEM", cx: true, url: "expedition", type: "Expedition" },
-    { ns: "ITEM", cx: true, url: "distilled-emotions", type: "Delirium" },
-    { ns: "ITEM", cx: true, url: "breach-catalyst", type: "Breach" },
-  ];
+  }> = schema.map;
 
   const database: PriceDatabase = [];
   let startPos = jsonBlob.indexOf(NINJA_OVERVIEW);

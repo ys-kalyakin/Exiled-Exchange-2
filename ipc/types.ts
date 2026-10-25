@@ -11,6 +11,8 @@ export interface HostConfig {
   readClientLog: boolean;
   libraryAlpha: boolean;
   libraryOutputPath: string | null;
+  initialDelay: number;
+  hideOverlayOnBlur: boolean;
 }
 
 export interface ShortcutAction {
@@ -18,53 +20,53 @@ export interface ShortcutAction {
   gamepadCombo?: string;
   keepModKeys?: true;
   action:
-  | {
-    type: "copy-item";
-    focusOverlay?: boolean;
-    target: string;
-  }
-  | {
-    type: "ocr-text";
-    target: "heist-gems";
-  }
-  | {
-    type: "trigger-event";
-    target: string;
-  }
-  | {
-    type: "stash-search";
-    text: string;
-  }
-  | {
-    type: "toggle-overlay";
-  }
-  | {
-    type: "paste-in-chat";
-    text: string;
-    send: boolean;
-  }
-  | {
-    type: "test-only";
-  };
+    | {
+        type: "copy-item";
+        focusOverlay?: boolean;
+        target: string;
+      }
+    | {
+        type: "ocr-text";
+        target: "heist-gems";
+      }
+    | {
+        type: "trigger-event";
+        target: string;
+      }
+    | {
+        type: "stash-search";
+        text: string;
+      }
+    | {
+        type: "toggle-overlay";
+      }
+    | {
+        type: "paste-in-chat";
+        text: string;
+        send: boolean;
+      }
+    | {
+        type: "test-only";
+      };
 }
 
 export type UpdateInfo =
   | {
-    state: "initial" | "checking-for-update";
-  }
+      state: "initial" | "checking-for-update";
+    }
   | {
-    state: "update-available";
-    version: string;
-    noDownloadReason: "not-supported" | "disabled-by-flag" | null;
-  }
+      state: "update-available";
+      version: string;
+      noDownloadReason: "not-supported" | "disabled-by-flag" | null;
+    }
   | {
-    state: "update-downloaded";
-    version: string;
-  }
+      state: "update-downloaded";
+      version: string;
+    }
   | {
-    state: "update-not-available" | "error";
-    checkedAt: number;
-  };
+      state: "update-not-available" | "error";
+      checkedAt: number;
+    };
 
 export interface HostState {
   contents: string | null;
@@ -78,6 +80,7 @@ export type IpcEvent =
   | IpcFocusChange
   | IpcVisibility
   | IpcFocusGame
+  | IpcOverlayRenderState
   | IpcHideExclusiveWidget
   | IpcTrackArea
   // events used by any type of Client:
@@ -92,7 +95,8 @@ export type IpcEvent =
   | IpcOcrText
   | IpcConfigChanged
   | IpcUserAction
-  | IpcWriteCsv;
+  | IpcWriteToFile
+  | IpcReparseLog;
 
 export type IpcEventPayload<
   Name extends IpcEvent["name"],
@@ -118,6 +122,13 @@ type IpcVisibility = Event<
 >;
 
 type IpcFocusGame = Event<"OVERLAY->MAIN::focus-game">;
+
+type IpcOverlayRenderState = Event<
+  "OVERLAY->MAIN::render-state",
+  {
+    shouldShow: boolean;
+  }
+>;
 
 type IpcHideExclusiveWidget = Event<"MAIN->OVERLAY::hide-exclusive-widget">;
 
@@ -198,6 +209,8 @@ type IpcGameLog = Event<
   }
 >;
 
+type IpcReparseLog = Event<"CLIENT->MAIN::re-parse-log">;
+
 type IpcUpdaterState = Event<"MAIN->CLIENT::updater-state", UpdateInfo>;
 
 // Hotkeyable actions are defined in `ShortcutAction`.
@@ -205,27 +218,130 @@ type IpcUpdaterState = Event<"MAIN->CLIENT::updater-state", UpdateInfo>;
 type IpcUserAction = Event<
   "CLIENT->MAIN::user-action",
   | {
-    action: "check-for-update" | "update-and-restart" | "quit";
-  }
+      action: "check-for-update" | "update-and-restart" | "quit";
+    }
   | {
-    action: "stash-search";
-    text: string;
-  }
+      action: "stash-search";
+      text: string;
+    }
 >;
 
-type IpcWriteCsv = Event<
+type IpcWriteToFile = Event<
   "CLIENT->MAIN::write-data",
   | {
-    action: "log-item";
-    text: string;
-  }
+      action: "log-item";
+      text: string;
+    }
   | {
-    action: "session";
-    start: boolean;
-    name?: string;
-    header?: string;
-  }
+      action: "session";
+      start: boolean;
+      name?: string;
+      header?: string;
+    }
+  | {
+      action: "client-log-event";
+      data: ClientLogEvent;
+      close: boolean;
+    }
 >;
+
+export type ClientLogEvent =
+  | GeneralLogEvent
+  | LoadZoneEvent
+  | LevelUpEvent
+  | GameVersionEvent
+  | AltTabEvent
+  | NpcEvent
+  | PlayerDeathEvent
+  | PassiveTreeEvent
+  | PermanentBonusEvent
+  | SkillPointEvent
+  | MapNavEvent
+  | AfkEvent;
+
+type BaseLogEvent = {
+  ts: number;
+  ms: number;
+};
+
+export type GeneralLogEvent = BaseLogEvent & {
+  type: "log" | "game-start" | "login";
+};
+
+export type LoadZoneEvent = BaseLogEvent & {
+  type: "load-zone";
+  zone: string;
+  areaLevel: number;
+  seed: number;
+};
+
+export type LevelUpEvent = BaseLogEvent & {
+  type: "level-up";
+  charName: string;
+  charClass: string;
+  level: number;
+};
+
+export type GameVersionEvent = BaseLogEvent & {
+  type: "game-version";
+  version: string;
+};
+
+export type AltTabEvent = BaseLogEvent & {
+  type: "alt-tab";
+  gameFocused: boolean;
+};
+
+export type NpcEvent = BaseLogEvent & {
+  type: "npc";
+  npcName: string;
+  message: string;
+};
+
+export type PlayerDeathEvent = BaseLogEvent & {
+  type: "player-death";
+  charName: string;
+};
+
+export type PassiveTreeEvent = BaseLogEvent & {
+  type: "passive-tree";
+  allocate: boolean;
+  nodeId: string;
+  nodeName: string;
+};
+
+export type PermanentBonusEvent = BaseLogEvent & {
+  type: "permanent-bonus";
+  permanentBonus: string;
+  charName: string;
+};
+
+export type SkillPointEvent = BaseLogEvent & {
+  type: "skill-point";
+  points: number;
+  pointType:
+    | "passive"
+    | "weapon-set"
+    | "atlas"
+    // all atlas sub trees
+    | "map-boss"
+    | "arbiter-boss"
+    | "abyss"
+    | "ritual"
+    | "delirium"
+    | "expedition"
+    | "breach";
+};
+
+export type MapNavEvent = BaseLogEvent & {
+  type: "map-nav";
+  mapName: string;
+};
+
+export type AfkEvent = BaseLogEvent & {
+  type: "afk";
+  isAfk: boolean;
+};
 
 interface Event<TName extends string, TPayload = undefined> {
   name: TName;

@@ -12,13 +12,14 @@
     "leagues_failed": "Erro ao carregar ligas",
     "leagues_failed_help": "Certifique-se de que o reino não está em manutenção. Também clique no botão \"Navegador\", pode ser necessário resolver um CAPTCHA.",
     "leagues_failed_help_alt": "Realize uma verificação de preços e siga as instruções na descrição do erro.",
-    "thanks_3rd_party": "Esta ferramenta é baseada em {0} e {1}. Por favor, apoie-os também.",
+    "thanks_3rd_party": "Esta ferramenta é baseada em {0} e {1}. Por favor, apoie-os também",
     "toggle_browser_hint": "Pressione {0} para alternar entre o navegador e o jogo.",
     "contact_me": "Entre em contato comigo em um dos Discords do PoE,",
     "version": "Versão {0}",
     "release_notes": "Notas de versão",
     "report_bug": "Reportar um erro no GitHub",
-    "quit": "Sair"
+    "quit": "Sair",
+    "deprecated": "Essa funcionalidade foi descontinuada e será removida no update {0}"
   },
   "map.mods.heist": "assalto",
   "map.mods.uber": "T17",
@@ -42,6 +43,7 @@
     "armour": "Armadura: {0}",
     "evasion_rating": "Índice de evasão: {0}",
     "energy_shield": "Escudo de energia: {0}",
+    "runic_ward": "Salvaguarda Rúnica: {0}",
     "block": "Chance de Bloqueio: {0}%",
     "total_dps": "DPS total: {0}",
     "physical_dps": "DPS físico: {0}",
@@ -105,15 +107,16 @@
     "rarity_magic": "Raridade: Mágico",
     "map_revives": "Ressurreições: {0}",
     "map_pack_size": "Tamanho do Grupo de Monstros: +{0}%",
-    "map_magic_monsters": "Monstros Mágicos: +{0}%",
-    "map_rare_monsters": "Monstros Raros: +{0}%",
+    "map_magic_monsters": "Efetividade do Monstro: +{0}%",
+    "map_rare_monsters": "Raridade de Monstros: +{0}%",
     "map_drop_chance": "Chance de Queda de Pedra Guia: +{0}%",
     "map_item_rarity": "Raridade de Itens: +{0}%",
     "map_gold": "Ouro Encontrado: +{0}%",
     "uses_remaining": "Usos restantes: {0}",
     "victorious": "Triunfante",
     "cowardly": "Covarde",
-    "deadly": "Mortal"
+    "deadly": "Mortal",
+    "open_on_craftofexile": "Abrir item base no Craft of Exile"
   },
   "item_category": {
     "prop": "Categoria: {0}",
@@ -155,7 +158,7 @@
     "accessory_trinket": "Bugiganga",
     "sanctum_relic": "Relíquia do Sanctum",
     "tincture": "Tintura",
-    "azmeri_charm": "Amuleto Azmeri",
+    "flask_charm": "Amuleto Azmeri",
     "weapon_crossbow": "Besta",
     "armour_focus": "Foco",
     "weapon_spear": "Lança",
@@ -432,8 +435,7 @@
     "tip_26": "O círculo vermelho próximo ao preço de um item indica que o jogador está Offline",
     "tip_27": "Os Logs são mostrados na aba de \"Depuração\" nas opções",
     "tip_28": "Você pode trocar a liga nas opções",
-    "tip_29": "Você pode adicionar teclas de atalhos com comandos customizados para o chat nas opções",
-    "tip_30": "Nós não falamos sobre o Exiled Exchange 1"
+    "tip_29": "Você pode adicionar teclas de atalhos com comandos customizados para o chat nas opções"
   },
   "leveling": {
     "enable_read_client_logs": "Os widgets de Leveling exigem a leitura dos logs do client",

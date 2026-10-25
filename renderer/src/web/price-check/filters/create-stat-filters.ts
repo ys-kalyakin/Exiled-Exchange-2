@@ -24,7 +24,7 @@ import { applyRules as applyMirroredTabletRules } from "./pseudo/reflection-rule
 import { applyRules as applyMissingFracturedRules } from "./pseudo/missing-fractured-rules";
 import { filterItemProp, filterBasePercentile } from "./pseudo/item-property";
 import { decodeOils, applyAnointmentRules } from "./pseudo/anointments";
-import { StatBetter, CLIENT_STRINGS } from "@/assets/data";
+import { StatBetter, CLIENT_STRINGS, CATALYST_TYPES } from "@/assets/data";
 import { explicitModifierCount, maxUsefulItemLevel } from "./common";
 import { getMaxSockets } from "@/parser/Parser";
 
@@ -41,18 +41,33 @@ export function createExactStatFilters(
   opts: { searchStatRange: number; defaultAllSelected: boolean },
 ): StatFilter[] {
   performance.mark("create-exact-filters-start");
+  let searchInRange = Math.min(2, opts.searchStatRange);
+  if (item.category === ItemCategory.Tablet) {
+    searchInRange = 0;
+  }
+
   if (item.mapBlighted || item.category === ItemCategory.Invitation) return [];
   if (
     item.isUnidentified &&
     item.rarity === ItemRarity.Unique &&
     !item.isSynthesised
-  )
-    return [];
+  ) {
+    // want implicit here
+
+    return statsByType
+      .filter((mod) => mod.type === ModifierType.Implicit)
+      .map((mod) => calculatedStatToFilter(mod, searchInRange, item))
+      .map((filter) => ({
+        ...filter,
+        disabled: false,
+      }));
+  }
 
   const keepByType = [
     ModifierType.Pseudo,
     ModifierType.Fractured,
     ModifierType.Desecrated,
+    ModifierType.Crafted,
     ModifierType.Enchant,
     ModifierType.Necropolis,
     ModifierType.Sanctum,
@@ -83,10 +98,6 @@ export function createExactStatFilters(
   if (item.category === ItemCategory.Flask) {
     keepByType.push(ModifierType.Crafted);
   }
-  let searchInRange = Math.min(2, opts.searchStatRange);
-  if (item.category === ItemCategory.Tablet) {
-    searchInRange = 0;
-  }
 
   const ctx: FiltersCreationContext = {
     item,
@@ -95,6 +106,10 @@ export function createExactStatFilters(
     statsByType: statsByType.filter((calc) => keepByType.includes(calc.type)),
   };
 
+  // want to get "uses remaining" pseudo for tablets
+  if (item.category === ItemCategory.Tablet) {
+    filterPseudo(ctx);
+  }
   // filterBasePercentile(ctx);
 
   ctx.filters.push(
@@ -220,7 +235,8 @@ export function initUiModFilters(
     statsByType: item.statsByType.map((calc) => {
       if (
         (calc.type === ModifierType.Fractured ||
-          calc.type === ModifierType.Desecrated) &&
+          calc.type === ModifierType.Desecrated ||
+          calc.type === ModifierType.Crafted) &&
         calc.stat.trade.ids[ModifierType.Explicit]
       ) {
         return { ...calc, type: ModifierType.Explicit };
@@ -245,15 +261,27 @@ export function initUiModFilters(
     ctx.statsByType = ctx.statsByType.filter(
       (mod) =>
         mod.type !== ModifierType.Fractured &&
-        mod.type !== ModifierType.Desecrated,
+        mod.type !== ModifierType.Desecrated &&
+        mod.type !== ModifierType.Crafted,
     );
-    ctx.statsByType.push(
-      ...item.statsByType.filter(
-        (mod) =>
-          mod.type === ModifierType.Fractured ||
-          mod.type === ModifierType.Desecrated,
-      ),
+    // since sources are merged, need to filter out the explicit ones here and
+    const statsWithAllSources = item.statsByType.filter(
+      (mod) =>
+        mod.type === ModifierType.Fractured ||
+        mod.type === ModifierType.Desecrated ||
+        mod.type === ModifierType.Crafted,
     );
+    const statsFilteredSources = statsWithAllSources.map((mod) => {
+      const filteredSources = mod.sources.filter((source) => {
+        return source.modifier.info.type === mod.type;
+      });
+      return {
+        ...mod,
+        sources: filteredSources,
+      };
+    });
+    // since filtered now, below calcStatToFilter should only include the correct rolls for special ones
+    ctx.statsByType.push(...statsFilteredSources);
   }
 
   if (item.isVeiled) {
@@ -377,6 +405,14 @@ export function calculatedStatToFilter(
       filter.tag = FilterTag.Eldritch;
     } else if (item.isSynthesised) {
       filter.tag = FilterTag.Synthesised;
+    } else if (
+      item.info.unique?.base.startsWith("Runemastered") &&
+      item.info.unique?.fixedStats
+    ) {
+      const fixedStats = item.info.unique.fixedStats;
+      if (!fixedStats.includes(filter.statRef)) {
+        filter.tag = FilterTag.Variant;
+      }
     }
   } else if (type === ModifierType.Explicit) {
     if (
@@ -412,13 +448,7 @@ export function calculatedStatToFilter(
       filter.tag = FilterTag.Incursion;
     }
   } else if (type === ModifierType.Enchant) {
-    if (
-      (item.isCorrupted &&
-        sources.filter((s) => !s.stat.stat.ref.includes("Allocates")).length &&
-        item.category !== ItemCategory.Map &&
-        item.category !== ItemCategory.Waystone) ||
-      sources.some((s) => s.modifier.info.generation === "corrupted")
-    ) {
+    if (sources.some((s) => s.modifier.info.generation === "corrupted")) {
       filter.tag = FilterTag.Corrupted;
     }
   }
@@ -553,6 +583,8 @@ function hideNotVariableStat(filter: StatFilter, item: ParsedItem) {
   )
     return;
 
+  if (filter.statRef === "# uses remaining") return;
+
   if (!filter.roll) {
     filter.hidden = "filters.hide_const_roll";
   } else if (!filter.roll.bounds && item.rarity === ItemRarity.Unique) {
@@ -653,10 +685,21 @@ export function finalFilterTweaks(ctx: FiltersCreationContext) {
     applyAnointmentRules(ctx.filters, ctx.item);
   }
 
+  const possibleCatalyst = item.qualityType
+    ? (item.category === ItemCategory.Jewel
+        ? CATALYST_TYPES.Refined
+        : item.category === ItemCategory.Ring ||
+            item.category === ItemCategory.Amulet
+          ? CATALYST_TYPES.Normal
+          : undefined
+      )?.find((c) => c.tags[1] === item.qualityType)
+    : undefined;
+
   for (const filter of ctx.filters) {
     if (
       filter.tag === FilterTag.Fractured ||
-      filter.tag === FilterTag.Desecrated
+      filter.tag === FilterTag.Desecrated ||
+      filter.tag === FilterTag.Crafted
     ) {
       const mod = ctx.item.statsByType.find(
         (mod) => mod.stat.ref === filter.statRef,
@@ -666,7 +709,8 @@ export function finalFilterTweaks(ctx: FiltersCreationContext) {
         filter.hidden = "filters.hide_for_crafting";
       }
     } else if (filter.tag === FilterTag.Skill && filter.roll) {
-      filter.disabled = filter.roll.value < 20;
+      // TODO: enable ilvl for these guys if over 80 i think
+      filter.disabled = filter.roll.value < 19;
       if (filter.disabled) {
         filter.hidden = "filters.hide_not_max_level";
       }
@@ -679,6 +723,23 @@ export function finalFilterTweaks(ctx: FiltersCreationContext) {
         filter.disabled = true;
         filter.hidden = "filters.hide_for_map";
       }
+    }
+    if (ctx.item.category === ItemCategory.Tablet) {
+      // never hide uses remaining on tablets, even unique ones
+      if (filter.statRef === "# uses remaining") {
+        filter.hidden = undefined;
+      }
+    }
+    if (filter.sources.some((s) => s.stat.fromAddedAugment)) {
+      filter.editorAdded = filter.sources.find(
+        (s) => s.stat.fromAddedAugment,
+      )?.stat.fromAddedAugment;
+    }
+    if (
+      filter.sources.some((s) => s.modifier.info.addedIncr) &&
+      possibleCatalyst
+    ) {
+      filter.editorAdded = possibleCatalyst;
     }
   }
 
@@ -764,15 +825,23 @@ function hideAllAugments(filters: StatFilter[]) {
       filter.tag === FilterTag.Augment ||
       filter.tag === FilterTag.AddedAugment
     ) {
-      filter.hidden = "filters.hide_const_roll";
+      // disable all
       filter.disabled = true;
+
+      // don't hide some specific ones
+      if (
+        filter.statRef ===
+        "Destroys all Augment Sockets on the item to create a Jewel Socket"
+      ) {
+        continue;
+      }
+
+      // hide rest
+      filter.hidden = "filters.hide_const_roll";
     }
   }
 }
 
-// TODO
-// +1 Prefix Modifier allowed
-// -1 Suffix Modifier allowed
 function showHasEmptyModifier(ctx: FiltersCreationContext):
   | {
       empty: ItemHasEmptyModifier;
@@ -785,41 +854,12 @@ function showHasEmptyModifier(ctx: FiltersCreationContext):
     return false;
   }
 
-  if (item.rarity === ItemRarity.Magic) {
-    const { prefixes: magicPrefixes, suffixes: magicSuffixes } =
-      explicitModifierCount(item);
-    if (magicPrefixes && magicSuffixes) {
-      return false;
-    }
-    if (magicPrefixes > 0) {
-      return {
-        empty: ItemHasEmptyModifier.Suffix,
-        counts: {
-          [ItemHasEmptyModifier.Prefix]: 0,
-          [ItemHasEmptyModifier.Suffix]: 1,
-          [ItemHasEmptyModifier.Any]: 1,
-        },
-      };
-    } else if (magicSuffixes > 0) {
-      return {
-        empty: ItemHasEmptyModifier.Prefix,
-        counts: {
-          [ItemHasEmptyModifier.Prefix]: 1,
-          [ItemHasEmptyModifier.Suffix]: 0,
-          [ItemHasEmptyModifier.Any]: 1,
-        },
-      };
-    }
-    // magic but has no explicit mods (annulled to 0)
-    return false;
-  }
-
-  if (item.rarity !== ItemRarity.Rare) {
+  if (item.rarity !== ItemRarity.Rare && item.rarity !== ItemRarity.Magic) {
     return false;
   }
 
   const { prefixes, suffixes, total } = explicitModifierCount(item);
-  const maxAmount = itemMaxModifiersBySlot(item);
+  const maxAmount = itemMaxModifiersBySlot(item, ctx.filters);
 
   if (total !== maxAmount[ItemHasEmptyModifier.Any] && total !== 0) {
     const empty =
@@ -869,47 +909,66 @@ function enableGoodRolledFilters(filters: StatFilter[], abovePct: number) {
   }
 }
 
-function itemMaxModifiersBySlot(item: ParsedItem) {
+function itemBaseMaxModifiersOfType(
+  category: ItemCategory | undefined,
+  rarity: ItemRarity | undefined,
+) {
   let base;
-  switch (item.category) {
-    case ItemCategory.Jewel:
-    case ItemCategory.Tablet:
-    case ItemCategory.Relic:
-    case ItemCategory.SanctumRelic:
-      base = 2;
+  switch (rarity) {
+    case ItemRarity.Normal:
+      base = 0;
       break;
+    case ItemRarity.Magic:
+      base = 1;
+      break;
+
     default:
-      base = 3;
+      switch (category) {
+        case ItemCategory.Jewel:
+        case ItemCategory.Tablet:
+        case ItemCategory.Relic:
+        case ItemCategory.SanctumRelic:
+          base = 2;
+          break;
+        default:
+          base = 3;
+          break;
+      }
       break;
   }
+  return base;
+}
+function itemMaxModifiersBySlot(
+  item: ParsedItem,
+  statsAndRolls: Array<{ statRef: string; roll?: StatFilterRoll }>,
+) {
+  const base = itemBaseMaxModifiersOfType(item.category, item.rarity);
 
   const maxAmount = [2 * base, base, base];
-  // TODO: change this to be programmatic based on implicits
-  if (
-    item.info.refName === "Dusk Amulet" ||
-    item.info.refName === "Dusk Ring"
-  ) {
-    maxAmount[ItemHasEmptyModifier.Prefix] += 1;
-    maxAmount[ItemHasEmptyModifier.Suffix] -= 1;
-  } else if (
-    item.info.refName === "Gloam Amulet" ||
-    item.info.refName === "Gloam Ring"
-  ) {
-    maxAmount[ItemHasEmptyModifier.Prefix] -= 1;
-    maxAmount[ItemHasEmptyModifier.Suffix] += 1;
-  } else if (
-    item.info.refName === "Penumbra Amulet" ||
-    item.info.refName === "Penumbra Ring"
-  ) {
-    maxAmount[ItemHasEmptyModifier.Prefix] += 2;
-    maxAmount[ItemHasEmptyModifier.Suffix] -= 2;
-  } else if (
-    item.info.refName === "Tenebrous Amulet" ||
-    item.info.refName === "Tenebrous Ring"
-  ) {
-    maxAmount[ItemHasEmptyModifier.Prefix] -= 2;
-    maxAmount[ItemHasEmptyModifier.Suffix] += 2;
+  for (const { statRef, roll } of statsAndRolls) {
+    if (statRef === "# Prefix Modifier allowed") {
+      maxAmount[ItemHasEmptyModifier.Prefix] += roll?.value ?? 0;
+    } else if (statRef === "# Suffix Modifier allowed") {
+      maxAmount[ItemHasEmptyModifier.Suffix] += roll?.value ?? 0;
+    }
   }
+
+  if (maxAmount[ItemHasEmptyModifier.Prefix] < 0) {
+    maxAmount[ItemHasEmptyModifier.Prefix] = 0;
+  }
+  if (maxAmount[ItemHasEmptyModifier.Suffix] < 0) {
+    maxAmount[ItemHasEmptyModifier.Suffix] = 0;
+  }
+
+  maxAmount[ItemHasEmptyModifier.Any] =
+    maxAmount[ItemHasEmptyModifier.Prefix] +
+    maxAmount[ItemHasEmptyModifier.Suffix];
 
   return maxAmount;
 }
+
+// Disable since this is export for tests
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const __testExports = {
+  itemMaxModifiersBySlot,
+};

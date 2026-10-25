@@ -23,6 +23,7 @@ export function handleApplyItemEdits(
   currencyItem: string,
   editType?: ItemEditorType,
 ) {
+  if (editType && editType !== ItemEditorType.Augment) return;
   if (filterStorage.length !== 0) return;
   // Testing with just one stat
   const newFilters = createNewStatFilter(item, currencyItem);
@@ -76,7 +77,9 @@ function createNewStatFilter(
 ): StatFilter[] | undefined {
   if (!item.category) return;
   const newItem = JSON.parse(JSON.stringify(item)) as ParsedItem;
-  const augmentData = AUGMENT_DATA_BY_AUGMENT[newAugment].find((rune) =>
+  const allCatAugData = AUGMENT_DATA_BY_AUGMENT[newAugment];
+  if (!allCatAugData) return;
+  const augmentData = allCatAugData.find((rune) =>
     rune.categories.includes(item.category!),
   );
   if (!augmentData) return;
