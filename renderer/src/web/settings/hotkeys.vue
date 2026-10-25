@@ -9,13 +9,24 @@
     <div class="mb-8 flex">
       <label class="flex-1">{{ t("settings.stash_scroll") }}</label>
       <div class="flex gap-x-4">
-        <ui-radio v-model="stashScroll" :value="true" class="font-poe"
+        <ui-radio
+          v-model="stashScroll"
+          :value="true"
+          :disabled="stashScrollUnsupported"
+          class="font-poe"
           >Ctrl + MouseWheel</ui-radio
         >
         <ui-radio v-model="stashScroll" :value="false">{{
           t("Disabled")
         }}</ui-radio>
       </div>
+    </div>
+    <div
+      v-if="stashScrollUnsupported"
+      class="mb-8 bg-gray-700 rounded px-2 py-1 leading-none"
+    >
+      <i class="fas fa-info-circle"></i>
+      {{ t("settings.stash_scroll_unavailable") }}
     </div>
   </div>
 </template>
@@ -27,8 +38,9 @@ export default {
 </script>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
+import { Host } from "@/web/background/IPC";
 import {
   configProp,
   configModelValue,
@@ -42,6 +54,11 @@ import UiRadio from "@/web/ui/UiRadio.vue";
 import HotkeysGeneric, { HotkeySchema } from "../settings/HotkeysGeneric.vue";
 
 const props = defineProps(configProp());
+
+const stashScrollUnsupported = shallowRef(false);
+Host.onEvent("MAIN->CLIENT::injection-availability", (e) => {
+  stashScrollUnsupported.value = !e.stashScrollSupported;
+});
 
 const hotkeys = computed<HotkeySchema[]>(() => {
   const priceCheckWidget = findWidget<PriceCheckWidget>(

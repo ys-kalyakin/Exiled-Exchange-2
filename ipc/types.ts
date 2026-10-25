@@ -93,6 +93,7 @@ export type IpcEvent =
   | IpcWidgetAction
   | IpcItemText
   | IpcOcrText
+  | IpcInjectionAvailability
   | IpcConfigChanged
   | IpcUserAction
   | IpcWriteToFile
@@ -189,6 +190,15 @@ type IpcItemText = Event<
     item?: unknown;
     position: { x: number; y: number };
     focusOverlay: boolean;
+  }
+>;
+
+type IpcInjectionAvailability = Event<
+  "MAIN->CLIENT::injection-availability",
+  {
+    kind: "libuiohook" | "ydotool";
+    available: boolean;
+    stashScrollSupported: boolean;
   }
 >;
 

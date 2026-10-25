@@ -14,8 +14,9 @@ context: |
   (remote `upstream`). Keep files shared with upstream mergeable: do not reformat
   upstream code (upstream style is prettier, 2-space indent) and keep fork-specific
   edits minimal and localized.
-  Platform priority: Windows first, Linux (X11) second; macOS is not targeted by
-  this fork. Release/update artifacts only exist for Windows.
+  Platform priority: Windows first, Linux second (X11 and KDE Plasma 6 Wayland
+  via the KWin bridge); macOS is not targeted by this fork. Release/update
+  artifacts only exist for Windows.
   Specs, proposals and other OpenSpec artifacts are written in English.
 
 # Per-artifact rules (optional)

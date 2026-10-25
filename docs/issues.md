@@ -51,3 +51,15 @@ title: Common issues
 - [Tray icon is not shown](https://github.com/SnosMe/awakened-poe-trade/issues/106)
 - 🔥[Screen is black](https://github.com/SnosMe/awakened-poe-trade/issues/185)
 - [Some issues with running in Wayland](https://github.com/Kvan7/Exiled-Exchange-2/issues/673)
+
+On KDE Plasma 6 Wayland sessions the app runs a native Wayland backend
+(KWin script + DBus bridge), which no longer requires forcing XWayland.
+Actions that inject input into the game (Copy Item, Paste-in-Chat, Stash
+Search) need the [ydotool](https://github.com/ReimuNotMoe/ydotool) helper
+(`ydotoold` running); without it they are disabled with a notice. Stash
+scrolling (Ctrl + MouseWheel) is unavailable on Wayland. Clipboard access
+while the game is focused goes through KDE Klipper (with a wl-clipboard
+fallback). Use the game's Windowed (Borderless) Fullscreen display mode:
+activating the overlay needs to deactivate the game on Wayland, and with
+exclusive fullscreen XWayland games that un-fullscreens (or minimizes)
+the game. Use `--overlay-backend=x11` to fall back to the X11 mode.

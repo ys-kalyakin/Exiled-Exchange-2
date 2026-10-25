@@ -53,7 +53,7 @@ export class OverlayVisibility {
     }
   }
 
-  private makeInvisible() {
+  public makeInvisible() {
     if (!this.isOverlayVisible || this.timerId !== undefined) return;
 
     this.timerId = setTimeout(

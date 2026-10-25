@@ -1,5 +1,6 @@
 import { Rectangle, Point, screen } from "electron";
 import { uIOhook, UiohookMouseEvent } from "uiohook-napi";
+import { getKWinBridge, isWaylandBackend } from "./kwin";
 import type { OverlayWindow } from "./OverlayWindow";
 import type { ServerEvents } from "../server";
 
@@ -8,6 +9,27 @@ export class WidgetAreaTracker {
   private from!: Point;
   private area!: Rectangle;
   private closeThreshold!: number;
+  private waylandCursorActive = false;
+  private readonly handleWaylandCursor = (pos: { x: number; y: number }) => {
+    // KWin exposes cursor position only, so the hold-key modifier state is
+    // not available and activation happens on entering the widget area
+    if (!this.overlay.isInteractable) {
+      const distance = Math.hypot(pos.x - this.from.x, pos.y - this.from.y);
+      if (distance > this.closeThreshold) {
+        this.server.sendEventTo("broadcast", {
+          name: "MAIN->OVERLAY::hide-exclusive-widget",
+          payload: undefined,
+        });
+        this.removeListeners();
+      }
+    } else if (isPointInsideRect(pos, this.area)) {
+      this.overlay.assertOverlayActive();
+    } else {
+      this.removeListeners();
+      this.overlay.assertGameActive();
+    }
+  };
+
   constructor(
     private server: ServerEvents,
     private overlay: OverlayWindow,
@@ -20,6 +42,21 @@ export class WidgetAreaTracker {
         this.from = screen.dipToScreenPoint(opts.from);
         // NOTE: bug in electron accepting only integers
         this.area = screen.dipToScreenRect(null, roundRect(opts.area));
+      } else if (isWaylandBackend()) {
+        // renderer coordinates are DIPs relative to the overlay window;
+        // the KWin cursor and game bounds are global physical pixels
+        const origin = getKWinBridge()?.targetBounds;
+        this.closeThreshold = opts.closeThreshold * opts.dpr;
+        this.from = {
+          x: Math.round((origin?.x ?? 0) + opts.from.x * opts.dpr),
+          y: Math.round((origin?.y ?? 0) + opts.from.y * opts.dpr),
+        };
+        this.area = roundRect({
+          x: (origin?.x ?? 0) + opts.area.x * opts.dpr,
+          y: (origin?.y ?? 0) + opts.area.y * opts.dpr,
+          width: opts.area.width * opts.dpr,
+          height: opts.area.height * opts.dpr,
+        });
       } else if (process.platform === "linux") {
         this.closeThreshold = opts.closeThreshold * opts.dpr;
 
@@ -58,12 +95,22 @@ export class WidgetAreaTracker {
       }
 
       this.removeListeners();
-      uIOhook.addListener("mousemove", this.handleMouseMove);
-      uIOhook.addListener("mousedown", this.handleMouseDown);
+      if (isWaylandBackend()) {
+        getKWinBridge()?.onCursor(this.handleWaylandCursor);
+        this.waylandCursorActive = true;
+      } else {
+        uIOhook.addListener("mousemove", this.handleMouseMove);
+        uIOhook.addListener("mousedown", this.handleMouseDown);
+      }
     });
   }
 
   removeListeners() {
+    if (this.waylandCursorActive) {
+      getKWinBridge()?.removeListener("cursor", this.handleWaylandCursor);
+      this.waylandCursorActive = false;
+      return;
+    }
     uIOhook.removeListener("mousemove", this.handleMouseMove);
     uIOhook.removeListener("mousedown", this.handleMouseDown);
   }
@@ -95,7 +142,7 @@ export class WidgetAreaTracker {
   };
 }
 
-function isPointInsideRect(point: Point, rect: Rectangle) {
+function isPointInsideRect(point: { x: number; y: number }, rect: Rectangle) {
   return (
     point.x > rect.x &&
     point.x < rect.x + rect.width &&
