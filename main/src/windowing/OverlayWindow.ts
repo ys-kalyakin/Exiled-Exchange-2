@@ -4,6 +4,7 @@ import {
   OverlayController,
   OVERLAY_WINDOW_OPTS,
 } from "electron-overlay-window";
+import { getKWinBridge, isWaylandBackend, OVERLAY_WINDOW_TITLE } from "./kwin";
 import type { ServerEvents } from "../server";
 import type { Logger } from "../RemoteLogger";
 import type { GameWindow } from "./GameWindow";
@@ -43,15 +44,24 @@ export class OverlayWindow {
     this.window = new BrowserWindow({
       icon: path.join(__dirname, process.env.STATIC!, "icon.png"),
       ...OVERLAY_WINDOW_OPTS,
+      title: OVERLAY_WINDOW_TITLE,
+      // the KWin script sizes the overlay to the game bounds, which the
+      // compositor can only do for resizable windows
+      ...(isWaylandBackend() ? { resizable: true } : {}),
       width: 800,
       height: 600,
       webPreferences: {
         allowRunningInsecureContent: false,
         webviewTag: true,
         spellcheck: false,
-        sandbox: false
+        sandbox: false,
       },
     });
+
+    // The KWin script drives placement/stacking for this window (Wayland)
+    if (isWaylandBackend()) {
+      getKWinBridge()?.bindOverlayWindow(this.window);
+    }
 
     this.window.setMenu(
       Menu.buildFromTemplate([
@@ -98,7 +108,12 @@ export class OverlayWindow {
 
       this.onOverlayActive();
 
-      OverlayController.activateOverlay();
+      if (isWaylandBackend()) {
+        getKWinBridge()?.activateOverlay();
+        this.window?.setIgnoreMouseEvents(false);
+      } else {
+        OverlayController.activateOverlay();
+      }
       this.poeWindow.isActive = false;
     }
   };
@@ -106,7 +121,12 @@ export class OverlayWindow {
   assertGameActive = () => {
     if (this.isInteractable) {
       this.isInteractable = false;
-      OverlayController.focusTarget();
+      if (isWaylandBackend()) {
+        getKWinBridge()?.focusGame();
+        this.window?.setIgnoreMouseEvents(true);
+      } else {
+        OverlayController.focusTarget();
+      }
       this.poeWindow.isActive = true;
 
       this.onGameActive();
@@ -178,8 +198,8 @@ export class OverlayWindow {
         "PoE2 window - No access",
         // ----------------------
         "Path of Exile 2 is running with administrator rights.\n" +
-        "\n" +
-        "You need to restart Exiled Exchange 2 with administrator rights.",
+          "\n" +
+          "You need to restart Exiled Exchange 2 with administrator rights.",
       );
     } else {
       this.server.sendEventTo("broadcast", {

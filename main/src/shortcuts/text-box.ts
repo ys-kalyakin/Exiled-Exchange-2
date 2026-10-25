@@ -1,7 +1,8 @@
-import { uIOhook, UiohookKey as Key } from "uiohook-napi";
+import { UiohookKey as Key } from "uiohook-napi";
 import process from "process";
 import type { HostClipboard } from "./HostClipboard";
 import type { OverlayWindow } from "../windowing/OverlayWindow";
+import { getInjector } from "./InputInjector";
 
 const PLACEHOLDER_LAST = "@last";
 const AUTO_CLEAR = [
@@ -18,38 +19,39 @@ export function typeInChat(
   send: boolean,
   clipboard: HostClipboard,
 ) {
-  clipboard.restoreShortly((clipboard) => {
+  clipboard.restoreShortly(async (clipboard) => {
+    const injector = getInjector();
     const modifiers = process.platform === "darwin" ? [Key.Meta] : [Key.Ctrl];
 
     if (text.startsWith(PLACEHOLDER_LAST)) {
       text = text.slice(`${PLACEHOLDER_LAST} `.length);
-      clipboard.writeText(text);
-      uIOhook.keyTap(Key.Enter, modifiers);
+      await clipboard.writeText(text);
+      injector.keyTap(Key.Enter, modifiers);
     } else if (text.endsWith(PLACEHOLDER_LAST)) {
       text = text.slice(0, -PLACEHOLDER_LAST.length);
-      clipboard.writeText(text);
-      uIOhook.keyTap(Key.Enter, modifiers);
-      uIOhook.keyTap(Key.Home);
+      await clipboard.writeText(text);
+      injector.keyTap(Key.Enter, modifiers);
+      injector.keyTap(Key.Home);
       // press twice to focus input when using controller
-      uIOhook.keyTap(Key.Home);
-      uIOhook.keyTap(Key.Delete);
+      injector.keyTap(Key.Home);
+      injector.keyTap(Key.Delete);
     } else {
-      clipboard.writeText(text);
-      uIOhook.keyTap(Key.Enter);
+      await clipboard.writeText(text);
+      injector.keyTap(Key.Enter);
       if (!AUTO_CLEAR.includes(text[0])) {
-        uIOhook.keyTap(Key.A, modifiers);
+        injector.keyTap(Key.A, modifiers);
       }
     }
 
-    uIOhook.keyTap(Key.V, modifiers);
+    injector.keyTap(Key.V, modifiers);
 
     if (send) {
-      uIOhook.keyTap(Key.Enter);
+      injector.keyTap(Key.Enter);
       // restore the last chat
-      uIOhook.keyTap(Key.Enter);
-      uIOhook.keyTap(Key.ArrowUp);
-      uIOhook.keyTap(Key.ArrowUp);
-      uIOhook.keyTap(Key.Escape);
+      injector.keyTap(Key.Enter);
+      injector.keyTap(Key.ArrowUp);
+      injector.keyTap(Key.ArrowUp);
+      injector.keyTap(Key.Escape);
     }
   });
 }
@@ -59,14 +61,15 @@ export function stashSearch(
   clipboard: HostClipboard,
   overlay: OverlayWindow,
 ) {
-  clipboard.restoreShortly((clipboard) => {
+  clipboard.restoreShortly(async (clipboard) => {
+    const injector = getInjector();
     overlay.assertGameActive();
-    clipboard.writeText(text);
-    uIOhook.keyTap(Key.F, [Key.Ctrl]);
+    await clipboard.writeText(text);
+    injector.keyTap(Key.F, [Key.Ctrl]);
 
-    uIOhook.keyTap(Key.V, [
+    injector.keyTap(Key.V, [
       process.platform === "darwin" ? Key.Meta : Key.Ctrl,
     ]);
-    uIOhook.keyTap(Key.Enter);
+    injector.keyTap(Key.Enter);
   });
 }

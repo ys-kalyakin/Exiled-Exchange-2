@@ -32,6 +32,20 @@
     >
     <loading-animation />
     <div
+      v-if="injectionUnavailable"
+      class="widget-default-style p-6 bg-red-600 mx-auto text-center text-base mt-6"
+      style="
+        min-width: 30rem;
+        z-index: 998;
+        width: fit-content;
+        position: absolute;
+        left: 0;
+        right: 0;
+      "
+    >
+      {{ t("injection_unavailable") }}
+    </div>
+    <div
       v-if="showEditingNotification"
       class="widget-default-style p-6 bg-blue-600 mx-auto text-center text-base mt-6"
       style="
@@ -150,6 +164,10 @@ export default defineComponent({
     });
     Host.onEvent("MAIN->OVERLAY::visibility", (e) => {
       hideUI.value = !e.isVisible;
+    });
+    const injectionUnavailable = shallowRef(false);
+    Host.onEvent("MAIN->CLIENT::injection-availability", (e) => {
+      injectionUnavailable.value = e.kind === "ydotool" && !e.available;
     });
 
     const lineQueue: string[] = [];
@@ -392,6 +410,7 @@ export default defineComponent({
 
     return {
       t,
+      injectionUnavailable,
       poePanelWidth,
       overlayBackground,
       widgets: computed(() => AppConfig().widgets),

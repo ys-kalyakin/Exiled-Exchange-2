@@ -3,6 +3,7 @@
 import { app, systemPreferences } from "electron";
 import { uIOhook } from "uiohook-napi";
 import os from "node:os";
+import path from "node:path";
 import { startServer, eventPipe, server } from "./server";
 import { Logger } from "./RemoteLogger";
 import { GameWindow } from "./windowing/GameWindow";
@@ -16,6 +17,27 @@ import { GameLogWatcher } from "./host-files/GameLogWatcher";
 import { HttpProxy } from "./proxy";
 import { installExtension, VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import { FileWriter } from "./host-files/FileWriter";
+import { detectBackend, initKWinBridge } from "./windowing/kwin";
+
+const DEFAULT_GAME_TITLE = "Path of Exile 2";
+
+/**
+ * KWin registerShortcut bindings are keyed by the hotkey sequence itself;
+ * the app resolves the sequence back to its actions on each activation.
+ */
+function shortcutsToBindings(
+  shortcuts: Array<{ shortcut: string; action: { type: string } }>,
+): Array<[string, string]> {
+  const bindings = new Map<string, string>();
+  for (const entry of shortcuts) {
+    if (entry.action.type === "test-only") continue;
+    const sequence = entry.shortcut.split(" + ").join("+");
+    if (!bindings.has(sequence)) {
+      bindings.set(sequence, sequence);
+    }
+  }
+  return [...bindings.entries()];
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.exit();
@@ -24,8 +46,12 @@ if (!app.requestSingleInstanceLock()) {
 if (process.platform !== "darwin") {
   app.disableHardwareAcceleration();
 }
+const overlayBackend = process.platform === "linux" ? detectBackend() : "x11";
 if (process.platform !== "linux") {
   app.enableSandbox();
+} else if (overlayBackend === "wayland") {
+  app.commandLine.appendSwitch("ozone-platform-hint", "wayland");
+  app.commandLine.appendSwitch("ozone-platform", "wayland");
 } else {
   app.commandLine.appendSwitch("ozone-platform-hint", "x11");
   app.commandLine.appendSwitch("ozone-platform", "x11");
@@ -96,6 +122,14 @@ let tray: AppTray;
 
     setTimeout(
       async () => {
+        const kwinBridge =
+          overlayBackend === "wayland"
+            ? initKWinBridge(
+                logger,
+                path.join(app.getPath("userData"), "kwin"),
+                { gameTitle: DEFAULT_GAME_TITLE, shortcuts: [] },
+              )
+            : undefined;
         const overlay = new OverlayWindow(eventPipe, logger, poeWindow);
         // eslint-disable-next-line no-new
         new OverlayVisibility(eventPipe, overlay, gameConfig);
@@ -127,11 +161,26 @@ let tray: AppTray;
             appUpdater.checkAtStartup();
             tray.overlayKey = cfg.overlayKey;
             fileWriter.restart(cfg.libraryAlpha, cfg.libraryOutputPath);
+            kwinBridge?.updateConfig({
+              gameTitle: cfg.windowTitle,
+              shortcuts: shortcutsToBindings(cfg.shortcuts),
+            });
           },
         );
 
-        uIOhook.start();
-        console.log("uIOhook started");
+        if (kwinBridge) {
+          await kwinBridge.start();
+          kwinBridge.onShortcut((id) => {
+            shortcuts.handleExternalShortcut(id);
+          });
+          app.on("will-quit", () => {
+            void kwinBridge.stop();
+          });
+          console.log("Wayland overlay backend started");
+        } else {
+          uIOhook.start();
+          console.log("uIOhook started");
+        }
         const port = await startServer(appUpdater, logger);
         // TODO: move up (currently crashes)
         logger.write(`info ${os.type()} ${os.release} / v${app.getVersion()}`);

@@ -1,8 +1,12 @@
-import { clipboard, Clipboard } from "electron";
 import type { Logger } from "../RemoteLogger";
+import { isWaylandBackend } from "../windowing/kwin";
+import { readClipboardText, writeClipboardText } from "./WaylandClipboard";
 
 const POLL_DELAY = 48;
 const POLL_LIMIT = 500;
+// the game under Proton/Wayland can take noticeably longer than on X11
+// to write the item text, so the poll window is wider there
+const WAYLAND_POLL_LIMIT = 2000;
 
 // PoE must read clipboard within this timeframe,
 // after that we restore clipboard.
@@ -10,11 +14,20 @@ const POLL_LIMIT = 500;
 // wrong content (= restored clipboard, potentially containing password).
 const RESTORE_AFTER = 120;
 
+/** Clipboard surface handed to copy/paste helpers; writes are routed. */
+export interface ClipboardWriter {
+  writeText: (text: string) => Promise<void>;
+}
+
 export class HostClipboard {
   private pollPromise?: Promise<string>;
   private elapsed = 0;
   private shouldRestore = false;
   private initialDelay = POLL_DELAY;
+  // the game under Proton/Wayland can take noticeably longer than on X11
+  // to write the item text, so the poll window is wider there
+  private pollLimit = isWaylandBackend() ? WAYLAND_POLL_LIMIT : POLL_LIMIT;
+  private textBefore = "";
 
   private isRestored = true;
 
@@ -22,69 +35,78 @@ export class HostClipboard {
     return this.pollPromise != null;
   }
 
-  constructor(private logger: Logger) { }
+  constructor(private logger: Logger) {}
 
   updateOptions(restoreClipboard: boolean) {
     this.shouldRestore = restoreClipboard;
   }
 
-  async readItemText(): Promise<string> {
-    this.elapsed = 0;
+  /**
+   * Reads the current clipboard and replaces it with a workaround token.
+   * Resolves once the token is published, so callers can inject the copy
+   * hotkey afterwards: Proton 10+ skips writing the clipboard when its
+   * content hasn't changed.
+   */
+  async prepareForItemRead(): Promise<void> {
     if (this.pollPromise) {
-      return await this.pollPromise;
+      return;
     }
-
-    let textBefore = clipboard.readText();
-    if (isPoeItem(textBefore)) {
+    this.elapsed = 0;
+    let textBefore = await readClipboardText();
+    const wasItem = isPoeItem(textBefore);
+    if (wasItem) {
       textBefore = "";
-      if (process.platform !== "linux") {
-        clipboard.writeText("");
-      } else {
-        // workaround KDE's "Prevent empty clipboard" feature
-        // see https://github.com/SnosMe/awakened-poe-trade/issues/1790#issuecomment-4062830614 (please don't comment on, add issue in EE2 if discussion is requested)
-        clipboard.writeText(`__EE2_FORCE_EMPTY_${Date.now()}`);
-      }
-    } else if (process.platform === "linux") {
-      // workaround bug in Proton 10+ https://github.com/SnosMe/awakened-poe-trade/issues/1846 (please don't comment on, add issue in EE2 if discussion is requested)
-      clipboard.writeText(`__EE2_FORCE_EMPTY_${Date.now()}`);
     }
+    if (process.platform !== "linux") {
+      if (wasItem) {
+        await writeClipboardText("");
+      }
+    } else {
+      // workaround KDE's "Prevent empty clipboard" feature
+      // see https://github.com/SnosMe/awakened-poe-trade/issues/1790#issuecomment-4062830614 (please don't comment on, add issue in EE2 if discussion is requested)
+      // and the Proton 10+ bug https://github.com/SnosMe/awakened-poe-trade/issues/1846 (please don't comment on, add issue in EE2 if discussion is requested)
+      await writeClipboardText(`__EE2_FORCE_EMPTY_${Date.now()}`);
+    }
+    this.textBefore = textBefore;
+  }
 
-    this.pollPromise = new Promise((resolve, reject) => {
-      const poll = () => {
-        const textAfter = clipboard.readText();
+  // Electron 44 made clipboard.readText async, so polling is promise-based
+  async readItemText(): Promise<string> {
+    await this.prepareForItemRead();
+    this.pollPromise ??= this.pollForItem();
+    return await this.pollPromise;
+  }
+
+  private async pollForItem(): Promise<string> {
+    try {
+      for (;;) {
+        await new Promise((resolve) => setTimeout(resolve, this.initialDelay));
+        const textAfter = await readClipboardText();
 
         if (isPoeItem(textAfter)) {
           if (this.shouldRestore) {
-            clipboard.writeText(textBefore);
+            await writeClipboardText(this.textBefore);
           }
-          this.pollPromise = undefined;
-          resolve(textAfter);
-        } else {
-          this.elapsed += POLL_DELAY;
-          if (this.elapsed < POLL_LIMIT) {
-            setTimeout(poll, POLL_DELAY);
-          } else {
-            if (this.shouldRestore) {
-              clipboard.writeText(textBefore);
-            }
-            this.pollPromise = undefined;
-
-            if (!isPoeItem(textAfter)) {
-              this.logger.write("warn [ClipboardPoller] No item text found.");
-            }
-            reject(new Error("Reading clipboard timed out"));
-          }
+          return textAfter;
         }
-      };
-      setTimeout(poll, this.initialDelay);
-    });
 
-    return await this.pollPromise;
+        this.elapsed += this.initialDelay;
+        if (this.elapsed >= this.pollLimit) {
+          if (this.shouldRestore) {
+            await writeClipboardText(this.textBefore);
+          }
+          this.logger.write("warn [ClipboardPoller] No item text found.");
+          throw new Error("Reading clipboard timed out");
+        }
+      }
+    } finally {
+      this.pollPromise = undefined;
+    }
   }
 
   // when `shouldRestore` is false, this function continues
   // to work as a throttler for callback
-  restoreShortly(cb: (clipboard: Clipboard) => void) {
+  async restoreShortly(run: (clipboard: ClipboardWriter) => Promise<void>) {
     // Not only do we not overwrite the clipboard, but we don't exec callback.
     // This throttling helps against disconnects from "Too many actions".
     if (!this.isRestored) {
@@ -92,11 +114,11 @@ export class HostClipboard {
     }
 
     this.isRestored = false;
-    const saved = clipboard.readText();
-    cb(clipboard);
+    const saved = await readClipboardText();
+    await run({ writeText: writeClipboardText });
     setTimeout(() => {
       if (this.shouldRestore) {
-        clipboard.writeText(saved);
+        void writeClipboardText(saved);
       }
       this.isRestored = true;
     }, RESTORE_AFTER);

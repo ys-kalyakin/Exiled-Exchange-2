@@ -1,5 +1,7 @@
 import { screen, globalShortcut } from "electron";
 import { uIOhook, UiohookKey, UiohookWheelEvent } from "uiohook-napi";
+import { getInjector } from "./InputInjector";
+import { getKWinBridge, isWaylandBackend } from "../windowing/kwin";
 import {
   isModKey,
   KeyToElectron,
@@ -15,7 +17,12 @@ import type { OverlayWindow } from "../windowing/OverlayWindow";
 import type { GameWindow } from "../windowing/GameWindow";
 import type { GameConfig } from "../host-files/GameConfig";
 import type { ServerEvents } from "../server";
-import { Gamepad, gamepadConfigs, GamepadButton, GamepadEvent } from "gamepad-io";
+import {
+  Gamepad,
+  gamepadConfigs,
+  GamepadButton,
+  GamepadEvent,
+} from "gamepad-io";
 
 type UiohookKeyT = keyof typeof UiohookKey;
 const UiohookToName = Object.fromEntries(
@@ -26,6 +33,7 @@ export class Shortcuts {
   private actions: ShortcutAction[] = [];
   private stashScroll = false;
   private logKeys = false;
+  private injector = getInjector();
   private areaTracker: WidgetAreaTracker;
   private clipboard: HostClipboard;
   private gamepad: Gamepad;
@@ -78,6 +86,12 @@ export class Shortcuts {
 
     this.server.onEventAnyClient("CLIENT->MAIN::user-action", (e) => {
       if (e.action === "stash-search") {
+        if (!this.injector.available) {
+          this.logger.write(
+            "error [Shortcuts] stash-search requires the input injection helper (ydotool), which is not available.",
+          );
+          return;
+        }
         stashSearch(e.text, this.clipboard, this.overlay);
       }
     });
@@ -96,21 +110,43 @@ export class Shortcuts {
       );
     });
 
-    uIOhook.on("wheel", (e) => {
-      if (!e.ctrlKey || !this.poeWindow.isActive || !this.stashScroll) return;
+    // global wheel capture is impossible on Wayland; stash-scroll stays
+    // disabled there and the renderer reports it as unavailable
+    if (!isWaylandBackend()) {
+      uIOhook.on("wheel", (e) => {
+        if (!e.ctrlKey || !this.poeWindow.isActive || !this.stashScroll) return;
 
-      if (!isStashArea(e, this.poeWindow)) {
-        if (e.rotation > 0) {
-          uIOhook.keyTap(UiohookKey.ArrowRight);
-        } else if (e.rotation < 0) {
-          uIOhook.keyTap(UiohookKey.ArrowLeft);
+        if (!isStashArea(e, this.poeWindow)) {
+          if (e.rotation > 0) {
+            this.injector.keyTap(UiohookKey.ArrowRight);
+          } else if (e.rotation < 0) {
+            this.injector.keyTap(UiohookKey.ArrowLeft);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   updateDelay(delay: number) {
     this.clipboard.updateDelay(delay);
+  }
+
+  /**
+   * Wayland backend: a KWin-registered shortcut fired. The id is the hotkey
+   * sequence in KWin notation ("Ctrl+D"); dispatch every matching action.
+   */
+  handleExternalShortcut(sequence: string) {
+    // KWin shortcuts fire globally; match the X11 behavior where shortcuts
+    // are unregistered while the game is inactive
+    if (!this.poeWindow.isActive) {
+      return;
+    }
+    for (const entry of this.actions) {
+      const kwinSequence = entry.shortcut.split(" + ").join("+");
+      if (kwinSequence === sequence) {
+        this.handleHotkey(entry);
+      }
+    }
   }
 
   updateActions(
@@ -179,6 +215,15 @@ export class Shortcuts {
         !duplicates.has(action.shortcut) ||
         action.action.type === "toggle-overlay",
     );
+
+    this.server.sendEventTo("broadcast", {
+      name: "MAIN->CLIENT::injection-availability",
+      payload: {
+        kind: this.injector.kind,
+        available: this.injector.available,
+        stashScrollSupported: !isWaylandBackend(),
+      },
+    });
   }
 
   private register() {
@@ -231,18 +276,34 @@ export class Shortcuts {
       this.logger.write(`debug [Shortcuts] Action type: ${entry.action.type}`);
     }
 
-    if (entry.keepModKeys) {
-      const nonModKey = entry.shortcut
-        .split(" + ")
-        .filter((key) => !isModKey(key))[0];
-      uIOhook.keyToggle(UiohookKey[nonModKey as UiohookKeyT], "up");
-    } else {
-      entry.shortcut
-        .split(" + ")
-        .reverse()
-        .forEach((key) => {
-          uIOhook.keyToggle(UiohookKey[key as UiohookKeyT], "up");
-        });
+    // KWin shortcuts are consumed by the compositor, so on the Wayland
+    // backend no keys are logically held when the action fires
+    if (this.injector.kind === "libuiohook") {
+      if (entry.keepModKeys) {
+        const nonModKey = entry.shortcut
+          .split(" + ")
+          .filter((key) => !isModKey(key))[0];
+        this.injector.keyToggle(UiohookKey[nonModKey as UiohookKeyT], "up");
+      } else {
+        entry.shortcut
+          .split(" + ")
+          .reverse()
+          .forEach((key) => {
+            this.injector.keyToggle(UiohookKey[key as UiohookKeyT], "up");
+          });
+      }
+    }
+
+    if (
+      (entry.action.type === "copy-item" ||
+        entry.action.type === "paste-in-chat" ||
+        entry.action.type === "stash-search") &&
+      !this.injector.available
+    ) {
+      this.logger.write(
+        `error [Shortcuts] Action "${entry.action.type}" requires the input injection helper (ydotool), which is not available.`,
+      );
+      return;
     }
 
     if (entry.action.type === "toggle-overlay") {
@@ -260,33 +321,44 @@ export class Shortcuts {
     } else if (entry.action.type === "copy-item") {
       const { action } = entry;
 
-      const pressPosition = screen.getCursorScreenPoint();
+      // screen.getCursorScreenPoint() is always {0,0} on Wayland; the KWin
+      // bridge reports the real compositor cursor position
+      const pressPosition =
+        getKWinBridge()?.lastCursor ?? screen.getCursorScreenPoint();
 
-      this.clipboard
-        .readItemText()
-        .then((clipboard) => {
-          this.areaTracker.removeListeners();
-          this.server.sendEventTo("last-active", {
-            name: "MAIN->CLIENT::item-text",
-            payload: {
-              target: action.target,
-              clipboard,
-              position: pressPosition,
-              focusOverlay: Boolean(action.focusOverlay),
-            },
-          });
-          if (action.focusOverlay && this.overlay.wasUsedRecently) {
-            this.overlay.assertOverlayActive();
-          }
-        })
-        .catch(() => {});
-
-      pressKeysToCopyItemText(
-        entry.keepModKeys
-          ? entry.shortcut.split(" + ").filter((key) => isModKey(key))
-          : undefined,
-        this.gameConfig.showModsKey,
-      );
+      // Inject the copy hotkey only after the workaround token is published:
+      // the game skips writing the clipboard while its content is unchanged.
+      void (async () => {
+        try {
+          await this.clipboard.prepareForItemRead();
+        } catch {
+          // a clipboard failure must not prevent the injection attempt
+        }
+        pressKeysToCopyItemText(
+          entry.keepModKeys && this.injector.kind === "libuiohook"
+            ? entry.shortcut.split(" + ").filter((key) => isModKey(key))
+            : undefined,
+          this.gameConfig.showModsKey,
+        );
+        this.clipboard
+          .readItemText()
+          .then((clipboard) => {
+            this.areaTracker.removeListeners();
+            this.server.sendEventTo("last-active", {
+              name: "MAIN->CLIENT::item-text",
+              payload: {
+                target: action.target,
+                clipboard,
+                position: pressPosition,
+                focusOverlay: Boolean(action.focusOverlay),
+              },
+            });
+            if (action.focusOverlay && this.overlay.wasUsedRecently) {
+              this.overlay.assertOverlayActive();
+            }
+          })
+          .catch(() => {});
+      })();
     } else if (
       entry.action.type === "ocr-text" &&
       entry.action.target === "heist-gems"
@@ -326,6 +398,7 @@ function pressKeysToCopyItemText(
   pressedModKeys: string[] = [],
   showModsKey: string,
 ) {
+  const injector = getInjector();
   let keys = mergeTwoHotkeys("Ctrl + C", showModsKey).split(" + ");
   keys = keys.filter((key) => key !== "C");
   if (process.platform !== "darwin") {
@@ -339,18 +412,18 @@ function pressKeysToCopyItemText(
   }
 
   for (const key of keys) {
-    uIOhook.keyToggle(UiohookKey[key as UiohookKeyT], "down");
+    injector.keyToggle(UiohookKey[key as UiohookKeyT], "down");
   }
 
   // finally press `C` to copy text
-  uIOhook.keyTap(UiohookKey.C);
+  injector.keyTap(UiohookKey.C);
 
   // Timeout to enforce release of keys
   // Game was dropping the release inputs for some reason
   setTimeout(() => {
     keys.reverse();
     for (const key of keys) {
-      uIOhook.keyToggle(UiohookKey[key as UiohookKeyT], "up");
+      injector.keyToggle(UiohookKey[key as UiohookKeyT], "up");
     }
   }, 10);
 }
