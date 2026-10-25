@@ -18,6 +18,7 @@
       style="width: 28.75rem"
     >
       <AppTitleBar
+        data-gp-row
         @close="closePriceCheck"
         @click="openLeagueSelection"
         :title="title"
@@ -161,6 +162,7 @@ import {
   WidgetManager,
   WidgetSpec,
 } from "../overlay/interfaces";
+import { useGamepadNavScope } from "@/web/overlay/gamepad/navigation";
 import { loadUltraLateItems } from "@/assets/data";
 import ReloadTradeData from "./fallback/ReloadTradeData.vue";
 
@@ -403,6 +405,20 @@ export default defineComponent({
         });
       }
     }
+
+    // gamepad/keyboard navigation: B closes the window exactly like the
+    // close button (in the default config that unpins the overlay too),
+    // a further B with no window left unpins a passive overlay
+    useGamepadNavScope({
+      wmId: props.config.wmId,
+      canNavigate: () => props.config.wmWants === "show",
+      root: () => document.getElementById("price-window"),
+      requestClose: () => {
+        if (props.config.wmWants !== "show") return false;
+        closePriceCheck();
+        return true;
+      },
+    });
 
     function openLeagueSelection() {
       const settings = wm.widgets.value.find((w) => w.wmType === "settings")!;

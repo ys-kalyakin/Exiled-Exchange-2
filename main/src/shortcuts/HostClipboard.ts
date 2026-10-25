@@ -5,8 +5,9 @@ import { readClipboardText, writeClipboardText } from "./WaylandClipboard";
 const POLL_DELAY = 48;
 const POLL_LIMIT = 500;
 // the game under Proton/Wayland can take noticeably longer than on X11
-// to write the item text, so the poll window is wider there
-const WAYLAND_POLL_LIMIT = 2000;
+// to write the item text, so the poll window is wider there; the first
+// copy after an idle period is the slowest (observed >1.9s on Proton 10)
+const WAYLAND_POLL_LIMIT = 5000;
 
 // PoE must read clipboard within this timeframe,
 // after that we restore clipboard.

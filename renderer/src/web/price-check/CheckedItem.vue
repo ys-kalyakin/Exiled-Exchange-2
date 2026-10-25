@@ -26,7 +26,7 @@
       :filters="itemFilters"
       :item="item"
     />
-    <div v-if="!doSearch" class="flex justify-between items-center">
+    <div v-if="!doSearch" class="flex justify-between items-center" data-gp-row>
       <div class="flex w-40" @mouseenter="handleSearchMouseenter">
         <button class="btn" @click="doSearch = true" style="min-width: 5rem">
           {{ t("Search") }}

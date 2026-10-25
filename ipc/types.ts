@@ -93,6 +93,7 @@ export type IpcEvent =
   | IpcWidgetAction
   | IpcItemText
   | IpcOcrText
+  | IpcGamepadInput
   | IpcInjectionAvailability
   | IpcConfigChanged
   | IpcUserAction
@@ -216,6 +217,14 @@ type IpcGameLog = Event<
   "MAIN->CLIENT::game-log",
   {
     lines: string[];
+  }
+>;
+
+type IpcGamepadInput = Event<
+  "MAIN->CLIENT::gamepad-input",
+  {
+    button: string;
+    phase: "down" | "up";
   }
 >;
 

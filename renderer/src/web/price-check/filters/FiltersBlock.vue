@@ -197,7 +197,7 @@
       class="mb-4"
       :class="presets.length > 1 ? 'mt-1' : 'mt-4'"
     >
-      <div class="flex" v-if="presets.length > 1">
+      <div class="flex" v-if="presets.length > 1" data-gp-row>
         <div class="w-5 border-b border-gray-700" />
         <div
           class="flex divide-x border-gray-700 border-t border-l border-r rounded-t overflow-hidden"
@@ -219,6 +219,7 @@
           :filter="filter"
           :item="item"
           :show-sources="showFilterSources"
+          data-gp-row
           @submit="handleStatsSubmit"
         />
         <div
@@ -263,7 +264,7 @@
         </template>
         <input type="submit" class="hidden" />
       </form>
-      <div class="flex gap-x-4">
+      <div class="flex gap-x-4" data-gp-row>
         <button
           @click="statsVisibility.disabled = !statsVisibility.disabled"
           class="bg-gray-700 px-2 py-1 text-gray-400 leading-none rounded-b w-40"
