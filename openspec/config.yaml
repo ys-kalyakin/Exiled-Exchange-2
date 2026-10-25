@@ -1,0 +1,31 @@
+schema: spec-driven
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+context: |
+  This repository is a fork of Kvan7/Exiled-Exchange-2 that adds gamepad support:
+  the `gamepad-io` dependency, the `gamepadCombo` field on `ShortcutAction`
+  (defaults `R3 + RT` for price check, `L3 + RT` for locked price check),
+  the 8BitDo Pro 2 profile, and the gamepad B button toggling the overlay.
+  Every change MUST keep this feature compiling and working.
+  The fork tracks upstream and is periodically merged with Kvan7/Exiled-Exchange-2
+  (remote `upstream`). Keep files shared with upstream mergeable: do not reformat
+  upstream code (upstream style is prettier, 2-space indent) and keep fork-specific
+  edits minimal and localized.
+  Platform priority: Windows first, Linux (X11) second; macOS is not targeted by
+  this fork. Release/update artifacts only exist for Windows.
+  Specs, proposals and other OpenSpec artifacts are written in English.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - State whether the change touches files shared with upstream and how it affects future upstream merges
+    - State whether the change affects the gamepad feature or Linux (X11) support
+    - Keep proposals concise; state what is out of scope
+  tasks:
+    - "Verification tasks must include the relevant checks: renderer lint/check-types/test and main lint/check-types"
+  specs:
+    - Keep requirements grounded in actual code behavior; reference the owning module (main/src, renderer/src, dataParser) in the spec Purpose
