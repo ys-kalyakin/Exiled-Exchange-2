@@ -84,12 +84,16 @@ export class Shortcuts {
       },
     });
     this.gamepad.on(GamepadEvent.COMBO_DOWN, (name: string) => {
+      // while the settings window records combos, the raw buttons are the
+      // binding input; registered combinations must not fire their actions
+      if (this.gamepadCapture) return;
       const entry = this.gamepadComboActions.get(name);
       if (entry) {
-        this.handleHotkey(entry);
+        this.handleHotkey(entry, "gamepad");
       }
     });
     this.gamepad.on(GamepadEvent.COMBO_UP, (name: string) => {
+      if (this.gamepadCapture) return;
       const entry = this.gamepadComboActions.get(name);
       if (
         entry?.action.type === "copy-item" &&
@@ -327,7 +331,10 @@ export class Shortcuts {
     }
   }
 
-  private handleHotkey(entry: ShortcutAction) {
+  private handleHotkey(
+    entry: ShortcutAction,
+    trigger: "keyboard" | "gamepad" = "keyboard",
+  ) {
     if (this.logKeys) {
       this.logger.write(`debug [Shortcuts] Action type: ${entry.action.type}`);
     }
@@ -376,6 +383,9 @@ export class Shortcuts {
       stashSearch(entry.action.text, this.clipboard, this.overlay);
     } else if (entry.action.type === "copy-item") {
       const { action } = entry;
+      // a pad-triggered copy means the user is reaching for the pad: the
+      // overlay must become navigable regardless of recent mouse/keyboard use
+      const gamepadTriggered = trigger === "gamepad";
 
       // screen.getCursorScreenPoint() is always {0,0} on Wayland; the KWin
       // bridge reports the real compositor cursor position
@@ -409,7 +419,10 @@ export class Shortcuts {
                 focusOverlay: Boolean(action.focusOverlay),
               },
             });
-            if (action.focusOverlay && this.overlay.wasUsedRecently) {
+            if (
+              action.focusOverlay &&
+              (gamepadTriggered || this.overlay.wasUsedRecently)
+            ) {
               this.overlay.assertOverlayActive();
             }
           })
@@ -455,6 +468,14 @@ export class Shortcuts {
   private forwardGamepadButton(button: GamepadButton, phase: "down" | "up") {
     if (!this.overlay.isInteractable) return;
     if (this.gamepadComboButtons.has(button) && !this.gamepadCapture) return;
+
+    // on-rig diagnosis: shows whether presses are forwarded at all and under
+    // which device button names
+    this.logger.write(
+      `debug [Shortcuts] gamepad ${button} ${phase}${
+        this.gamepadCapture ? " (capture)" : ""
+      }`,
+    );
 
     this.server.sendEventTo("broadcast", {
       name: "MAIN->CLIENT::gamepad-input",

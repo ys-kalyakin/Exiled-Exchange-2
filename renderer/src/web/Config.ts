@@ -13,6 +13,7 @@ import type { GamepadConfig } from "./overlay/gamepad/config";
 import {
   defaultGamepadConfig,
   upgradeGamepadConfig,
+  upgradeItemCheckCombo,
 } from "./overlay/gamepad/config";
 
 const _config = shallowRef<Config | null>(null);
@@ -164,7 +165,7 @@ export interface Config {
 }
 
 export const defaultConfig = (): Config => ({
-  configVersion: 36,
+  configVersion: 37,
   overlayKey: "Shift + Space",
   overlayBackground: "rgba(129, 139, 149, 0.15)",
   overlayBackgroundClose: true,
@@ -698,6 +699,13 @@ function upgradeConfig(_config: Config): Config {
     upgradeGamepadConfig(config);
 
     config.configVersion = 36;
+  }
+
+  if (config.configVersion < 37) {
+    // NOTE: fork: gamepad support (fix-gamepad-nav-mapcheck-settings)
+    upgradeItemCheckCombo(config);
+
+    config.configVersion = 37;
   }
   /* eslint-enable */
 

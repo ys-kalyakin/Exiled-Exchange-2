@@ -51,7 +51,7 @@ export default {
             { matcher: "Area contains two Unique Bosses", decision: "g--" },
           ],
         },
-        gamepadHotkey: null, // fork: gamepad support
+        gamepadHotkey: "L3 + LT", // fork: gamepad support
       };
     },
   } satisfies WidgetSpec,

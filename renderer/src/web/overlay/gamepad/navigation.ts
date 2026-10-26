@@ -1,5 +1,6 @@
 import {
   inject,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   provide,
@@ -121,7 +122,10 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
       const focused = applyFocusVisual(root, focusState, {
         rows: rowsForScope(scope, root),
       });
-      if (focused) activateControl(focused.control);
+      if (focused) {
+        activateControl(focused.control);
+        refocusAfterActivation(scope);
+      }
       return;
     }
 
@@ -181,6 +185,40 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
       };
     }
     applyFocusVisual(root, focusState, { rows });
+  }
+
+  /**
+   * Re-applies the focus visuals after an activation: the activated control
+   * may re-render with a different class binding (a stat color cycle, an
+   * active menu entry), which overwrites the imperative focus classes once
+   * Vue flushes the update. Clamps the state against the re-collected rows
+   * so a re-render that removed rows cannot leave it out of range.
+   */
+  function refocusAfterActivation(scope: GamepadNavScope) {
+    nextTick(() => {
+      if (focusWmId !== scope.wmId || !focusState.engaged) return;
+      const current = deps.topScope();
+      if (!current || current.wmId !== scope.wmId) return;
+      const currentRoot = current.root();
+      if (!currentRoot) return;
+      const rows = rowsForScope(current, currentRoot);
+      if (!rows.length) {
+        focusState = { ...focusState, engaged: false };
+        clearFocusVisual(currentRoot);
+        return;
+      }
+      const rowIndex = Math.min(focusState.rowIndex, rows.length - 1);
+      const controls = collectControls(rows[rowIndex]);
+      focusState = {
+        engaged: true,
+        rowIndex,
+        controlIndex: Math.min(
+          focusState.controlIndex,
+          Math.max(controls.length - 1, 0),
+        ),
+      };
+      applyFocusVisual(currentRoot, focusState, { rows });
+    });
   }
 
   function jumpSection(scope: GamepadNavScope) {
@@ -357,23 +395,36 @@ export function useGamepadWidgetScope(
 }
 
 if (import.meta.vitest) {
-  const { it, expect } = import.meta.vitest;
+  const { it, expect, vi } = import.meta.vitest;
 
   // minimal DOM stubs: enough for collectRows/collectControls/applyFocusVisual
   function fakeControl() {
+    const classes = new Set<string>();
     return {
       disabled: false,
       getClientRects: () => [{}, {}],
-      classList: { add() {}, remove() {} },
+      classList: {
+        add: (c: string) => classes.add(c),
+        remove: (c: string) => classes.delete(c),
+      },
+      hasClass: (c: string) => classes.has(c),
+      dispatchEvent: () => {},
       matches: () => false,
     };
   }
 
   function fakeRoot(rows: number[]) {
     const rowClasses: Set<string>[] = [];
+    const rowControls: ReturnType<typeof fakeControl>[][] = [];
     const rowEls = rows.map((controls) => {
       const classes = new Set<string>();
       rowClasses.push(classes);
+      // stable per-row control objects so focus re-application after an
+      // activation lands on the same stubs the assertions inspect
+      const rowControlStubs = Array.from({ length: controls }, () =>
+        fakeControl(),
+      );
+      rowControls.push(rowControlStubs);
       return {
         getClientRects: () => [{}],
         classList: {
@@ -381,12 +432,12 @@ if (import.meta.vitest) {
           remove: (c: string) => classes.delete(c),
         },
         matches: () => false,
-        querySelectorAll: () =>
-          Array.from({ length: controls }, () => fakeControl()),
+        querySelectorAll: () => rowControlStubs,
       };
     });
     return {
       rowClasses,
+      rowControls,
       querySelectorAll: (selector: string) => {
         if (selector === "[data-gp-row]") return rowEls;
         // class cleanup: removing from every row is a no-op for rows
@@ -546,6 +597,64 @@ if (import.meta.vitest) {
     navigator.dispatch({ kind: "move", axis: "row", delta: 1 });
 
     expect(rootRef.current.rowClasses[0].has("gp-focused-row")).toBe(true);
+  });
+
+  it("re-applies focus classes after the activation re-renders the control", async () => {
+    // constructor functions instead of empty classes: instanceof checks in
+    // activateControl must see the stubs, and the linter forbids empty classes
+    vi.stubGlobal("MouseEvent", function MouseEvent() {});
+    vi.stubGlobal("HTMLInputElement", function HTMLInputElement() {});
+    vi.stubGlobal("HTMLSelectElement", function HTMLSelectElement() {});
+    vi.stubGlobal("window", {});
+    const { navigator, scopes } = createHarness();
+    const root = fakeRoot([1]);
+    const control = root.rowControls[0][0];
+    scopes.push({
+      wmId: 1,
+      canNavigate: () => true,
+      root: () => root as unknown as HTMLElement,
+      requestClose: () => false,
+    });
+
+    navigator.dispatch({ kind: "move", axis: "row", delta: 1 }); // engage row 0
+    navigator.dispatch({ kind: "activate" });
+    // Vue re-patches the control's class binding, wiping the imperative ring
+    control.classList.remove("focused-gamepad");
+    await nextTick();
+
+    expect(control.hasClass("focused-gamepad")).toBe(true);
+    expect(root.rowClasses[0].has("gp-focused-row")).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it("clamps the focus state when the activation re-render removes rows", async () => {
+    // constructor functions instead of empty classes: instanceof checks in
+    // activateControl must see the stubs, and the linter forbids empty classes
+    vi.stubGlobal("MouseEvent", function MouseEvent() {});
+    vi.stubGlobal("HTMLInputElement", function HTMLInputElement() {});
+    vi.stubGlobal("HTMLSelectElement", function HTMLSelectElement() {});
+    vi.stubGlobal("window", {});
+    const { navigator, scopes } = createHarness();
+    const rootRef = { current: fakeRoot([1, 1]) };
+    const scope: GamepadNavScope = {
+      wmId: 1,
+      canNavigate: () => true,
+      root: () => rootRef.current as unknown as HTMLElement,
+      requestClose: () => false,
+    };
+    scopes.push(scope);
+
+    navigator.dispatch({ kind: "move", axis: "row", delta: 1 }); // row 0
+    navigator.dispatch({ kind: "move", axis: "row", delta: 1 }); // row 1
+    navigator.dispatch({ kind: "activate" });
+    rootRef.current = fakeRoot([1]); // the re-render dropped a row
+    await nextTick();
+
+    expect(rootRef.current.rowClasses[0].has("gp-focused-row")).toBe(true);
+
+    navigator.dispatch({ kind: "move", axis: "row", delta: -1 });
+    expect(rootRef.current.rowClasses[0].has("gp-focused-row")).toBe(true);
+    vi.unstubAllGlobals();
   });
 
   // richer tree stub for the synthesis routing: parent links, contains,

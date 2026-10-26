@@ -62,6 +62,22 @@ export function upgradeGamepadConfig(config: {
   }
 }
 
+/**
+ * Fills the item-check widget's default pad combo for configs saved before
+ * the map check became pad-openable (called from the configVersion 37 rung
+ * of `upgradeConfig` in `renderer/src/web/Config.ts`). The field never had a
+ * working combo before, so an empty binding there is the old default rather
+ * than a deliberate clearing; a user-set binding is kept.
+ */
+export function upgradeItemCheckCombo(config: {
+  widgets: Array<Record<string, unknown>>;
+}): void {
+  const itemCheck = config.widgets.find((w) => w.wmType === "item-check");
+  if (itemCheck && !itemCheck.gamepadHotkey) {
+    itemCheck.gamepadHotkey = "L3 + LT";
+  }
+}
+
 if (import.meta.vitest) {
   const { it, expect } = import.meta.vitest;
 
@@ -140,5 +156,29 @@ if (import.meta.vitest) {
 
     expect(config.widgets[0].gamepadHotkey).toBe("R3 + LT");
     expect(config.widgets[0].gamepadHotkeyLocked).toBe("L3 + RT");
+  });
+
+  it("item-check combo migration fills the default over the old empty one", () => {
+    const config: { widgets: Array<Record<string, unknown>> } = {
+      widgets: [
+        { wmType: "item-check", gamepadHotkey: null, hotkey: "Q" },
+        { wmType: "item-check", gamepadHotkey: "SELECT + UP" },
+        { wmType: "delve-grid", gamepadHotkey: null },
+      ],
+    };
+
+    upgradeItemCheckCombo(config);
+
+    expect(config.widgets[0].gamepadHotkey).toBe("L3 + LT");
+    expect(config.widgets[0].hotkey).toBe("Q");
+    expect(config.widgets[1].gamepadHotkey).toBe("SELECT + UP");
+    expect(config.widgets[2].gamepadHotkey).toBeNull();
+
+    // a pre-config-ux config: the field is missing entirely
+    const legacy: { widgets: Array<Record<string, unknown>> } = {
+      widgets: [{ wmType: "item-check", hotkey: "Q" }],
+    };
+    upgradeItemCheckCombo(legacy);
+    expect(legacy.widgets[0].gamepadHotkey).toBe("L3 + LT");
   });
 }
