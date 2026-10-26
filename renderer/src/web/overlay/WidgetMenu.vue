@@ -81,6 +81,7 @@ import { registry } from "./widget-registry";
 import { Host } from "@/web/background/IPC";
 import Widget from "./Widget.vue";
 import { useI18nNs } from "@/web/i18n";
+import { useGamepadWidgetScope } from "./gamepad/navigation"; // fork: gamepad support
 
 export default defineComponent({
   widget: {
@@ -112,6 +113,11 @@ export default defineComponent({
   },
   setup(props) {
     const wm = inject<WidgetManager>("wm")!;
+
+    // fork: gamepad support — the menu is reachable from the pad; it has no
+    // close control of its own, so B falls through to unpinning the overlay
+    // (open popovers still close first)
+    useGamepadWidgetScope(props.config, { requestClose: () => false });
 
     const widgets = computed(() => {
       return wm.widgets.value

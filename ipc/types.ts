@@ -83,6 +83,9 @@ export type IpcEvent =
   | IpcOverlayRenderState
   | IpcHideExclusiveWidget
   | IpcTrackArea
+  // fork: gamepad support
+  | IpcGamepadAxis
+  | IpcGamepadCapture
   // events used by any type of Client:
   | IpcSaveConfig
   | IpcUpdaterState
@@ -93,6 +96,7 @@ export type IpcEvent =
   | IpcWidgetAction
   | IpcItemText
   | IpcOcrText
+  | IpcGamepadInput
   | IpcInjectionAvailability
   | IpcConfigChanged
   | IpcUserAction
@@ -216,6 +220,32 @@ type IpcGameLog = Event<
   "MAIN->CLIENT::game-log",
   {
     lines: string[];
+  }
+>;
+
+type IpcGamepadInput = Event<
+  "MAIN->CLIENT::gamepad-input",
+  {
+    button: string;
+    phase: "down" | "up";
+  }
+>;
+
+// fork: gamepad support — left stick deflection, values in [-1, 1]
+type IpcGamepadAxis = Event<
+  "MAIN->CLIENT::gamepad-axis",
+  {
+    x: number;
+    y: number;
+  }
+>;
+
+// fork: gamepad support — while capture mode is on (settings shown), main
+// forwards all gamepad buttons including combo participants
+type IpcGamepadCapture = Event<
+  "OVERLAY->MAIN::gamepad-capture",
+  {
+    capture: boolean;
   }
 >;
 

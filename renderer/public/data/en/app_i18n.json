@@ -398,7 +398,32 @@
     "client_log_explain": "Client.txt log file contains debugging info and chat logs. This is used to detect zone changes and player level ups.",
     "hide_overlay_on_blur": "Fully hide overlay when it loses focus instead of making it transparent.",
     "hide_overlay_on_blur_hint": "This may gain performance improvements on some systems, but may induce flickering.",
-    "stash_scroll_unavailable": "Stash scrolling with Ctrl + MouseWheel is not available on Wayland (no global input capture)."
+    "stash_scroll_unavailable": "Stash scrolling with Ctrl + MouseWheel is not available on Wayland (no global input capture).",
+    "gamepad": {
+      "title": "Gamepad",
+      "navigation_enabled": "Gamepad navigation",
+      "repeat_delay": "Navigation repeat delay",
+      "repeat_interval": "Navigation repeat interval",
+      "stick_dead_zone": "Left stick dead-zone",
+      "button_assignments": "Button assignments",
+      "default": "default",
+      "press_combo": "Press the combo…",
+      "combo_hint": "Gamepad combo — click, then hold the buttons",
+      "no_combo": "Not Set",
+      "intent": {
+        "unmapped": "Unmapped",
+        "row_up": "Row up",
+        "row_down": "Row down",
+        "control_left": "Control left",
+        "control_right": "Control right",
+        "activate": "Activate",
+        "back": "Back",
+        "search": "Search",
+        "browser": "Trade browser",
+        "preset": "Next preset",
+        "section": "Next section"
+      }
+    }
   },
   "price_check": {
     "name": "Price check",

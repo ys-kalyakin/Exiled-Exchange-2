@@ -51,6 +51,7 @@ export default {
             { matcher: "Area contains two Unique Bosses", decision: "g--" },
           ],
         },
+        gamepadHotkey: null, // fork: gamepad support
       };
     },
   } satisfies WidgetSpec,
@@ -62,6 +63,7 @@ import { computed, inject, ref } from "vue";
 import { MainProcess } from "@/web/background/IPC";
 import { ItemCategory, ItemRarity, parseClipboard, ParsedItem } from "@/parser";
 import { registerActions } from "./hotkeyable-actions";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 import type { WidgetManager } from "../overlay/interfaces";
 
 import Widget from "../overlay/Widget.vue";
@@ -73,6 +75,10 @@ const props = defineProps<{
 }>();
 
 const wm = inject<WidgetManager>("wm")!;
+
+// fork: gamepad support — map check / item info navigable from the pad;
+// B hides the widget like its own close button
+useGamepadWidgetScope(props.config);
 
 const checkPosition = ref({ x: 1, y: 1 });
 const item = ref<ParsedItem | null>(null);

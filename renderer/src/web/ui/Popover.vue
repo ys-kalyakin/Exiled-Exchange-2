@@ -10,6 +10,7 @@
 <script lang="ts">
 import {
   defineComponent,
+  inject,
   onMounted,
   onBeforeUnmount,
   ref,
@@ -18,6 +19,7 @@ import {
 import tippy, { Instance, Placement } from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/themes/light.css";
+import { gamepadPopoverRegistryKey } from "@/web/overlay/gamepad/types";
 
 export default defineComponent({
   name: "UiPopover",
@@ -54,6 +56,9 @@ export default defineComponent({
     const target = ref<HTMLElement>(null!);
     const content = ref<HTMLElement>(null!);
     let instance: Instance;
+    // open popovers are closable via the gamepad B button (back chain)
+    const gamepadPopovers = inject(gamepadPopoverRegistryKey, null);
+    let removeGamepadCloser: (() => void) | undefined;
 
     onMounted(() => {
       instance = tippy(target.value, {
@@ -65,6 +70,14 @@ export default defineComponent({
         arrow: props.arrow,
         delay: props.delay,
         maxWidth: "none",
+        onShow: () => {
+          removeGamepadCloser?.();
+          removeGamepadCloser = gamepadPopovers?.add(() => instance.hide());
+        },
+        onHide: () => {
+          removeGamepadCloser?.();
+          removeGamepadCloser = undefined;
+        },
         popperOptions: {
           modifiers: [
             ...(props.boundary
@@ -84,6 +97,8 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       instance.destroy();
+      removeGamepadCloser?.();
+      removeGamepadCloser = undefined;
     });
 
     return {

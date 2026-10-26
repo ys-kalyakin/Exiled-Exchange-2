@@ -61,6 +61,8 @@ export interface PriceCheckWidget extends Widget {
   savedAugments: {
     [key: string]: Array<string | null>;
   };
+  gamepadHotkey: string | null; // fork: gamepad support
+  gamepadHotkeyLocked: string | null; // fork: gamepad support
 }
 
 export interface StopwatchWidget extends Widget {
@@ -71,6 +73,7 @@ export interface StopwatchWidget extends Widget {
 
 export interface DelveGridWidget extends Widget {
   toggleKey: string | null;
+  gamepadHotkey: string | null; // fork: gamepad support
 }
 
 export interface ImageStripWidget extends Widget {

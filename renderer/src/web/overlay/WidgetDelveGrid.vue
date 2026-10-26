@@ -45,6 +45,7 @@ export default {
         wmZorder: null,
         wmFlags: ["hide-on-focus", "menu::skip"],
         toggleKey: null,
+        gamepadHotkey: null, // fork: gamepad support
       };
     },
   } satisfies WidgetSpec,

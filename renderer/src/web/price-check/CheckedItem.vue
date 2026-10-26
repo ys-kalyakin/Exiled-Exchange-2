@@ -10,6 +10,7 @@
       :stats="itemStats"
       :item="item"
       :presets="presets"
+      data-gp-section
       @preset="selectPreset"
       @submit="doSearch = true"
     />
@@ -26,7 +27,12 @@
       :filters="itemFilters"
       :item="item"
     />
-    <div v-if="!doSearch" class="flex justify-between items-center">
+    <div
+      v-if="!doSearch"
+      class="flex justify-between items-center"
+      data-gp-row
+      data-gp-section
+    >
       <div class="flex w-40" @mouseenter="handleSearchMouseenter">
         <button class="btn" @click="doSearch = true" style="min-width: 5rem">
           {{ t("Search") }}
@@ -351,6 +357,18 @@ export default defineComponent({
       ),
       selectPreset(id: string) {
         presets.value.active = id;
+      },
+      // fork: gamepad support — shortcut-button actions (X, LB)
+      execSearch() {
+        doSearch.value = true;
+      },
+      selectNextPreset() {
+        const list = presets.value.presets;
+        if (list.length < 2) return;
+        const index = list.findIndex(
+          (preset) => preset.id === presets.value.active,
+        );
+        presets.value.active = list[(index + 1) % list.length].id;
       },
       makeTradeLink() {
         return `https://${getTradeEndpoint()}/trade2/search/poe2/${itemFilters.value.trade.league}?q=${JSON.stringify(createTradeRequest(itemFilters.value, itemStats.value, props.item))}`;

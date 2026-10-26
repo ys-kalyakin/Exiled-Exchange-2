@@ -8,6 +8,12 @@ import type { ItemCheckWidget } from "./item-check/widget";
 import type { ItemSearchWidget } from "./item-search/widget";
 import { registry as widgetRegistry } from "./overlay/widget-registry.js";
 import { LibraryWidget } from "./library/widget";
+// fork: gamepad support
+import type { GamepadConfig } from "./overlay/gamepad/config";
+import {
+  defaultGamepadConfig,
+  upgradeGamepadConfig,
+} from "./overlay/gamepad/config";
 
 const _config = shallowRef<Config | null>(null);
 let _lastSavedConfig: Config | null = null;
@@ -154,10 +160,11 @@ export interface Config {
   alphas: Array<"library">;
   tipsFrequency: TipsFrequency;
   readClientLog: boolean; // default to false, opt-in only
+  gamepad: GamepadConfig; // fork: gamepad support
 }
 
 export const defaultConfig = (): Config => ({
-  configVersion: 35,
+  configVersion: 36,
   overlayKey: "Shift + Space",
   overlayBackground: "rgba(129, 139, 149, 0.15)",
   overlayBackgroundClose: true,
@@ -230,6 +237,7 @@ export const defaultConfig = (): Config => ({
   alphas: [],
   tipsFrequency: TipsFrequency.Normal,
   readClientLog: false, // default to false, opt-in only
+  gamepad: defaultGamepadConfig(), // fork: gamepad support
 });
 
 function upgradeConfig(_config: Config): Config {
@@ -684,6 +692,13 @@ function upgradeConfig(_config: Config): Config {
 
     config.configVersion = 35;
   }
+
+  if (config.configVersion < 36) {
+    // NOTE: fork: gamepad support (add-gamepad-config-ux)
+    upgradeGamepadConfig(config);
+
+    config.configVersion = 36;
+  }
   /* eslint-enable */
 
   return config as unknown as Config;
@@ -697,7 +712,7 @@ function getConfigForHost(): HostConfig {
   if (priceCheck.hotkey) {
     actions.push({
       shortcut: `${priceCheck.hotkeyHold} + ${priceCheck.hotkey}`,
-      gamepadCombo: "R3 + RT",
+      gamepadCombo: priceCheck.gamepadHotkey || undefined, // fork: gamepad support
       action: { type: "copy-item", target: "price-check", focusOverlay: false },
       keepModKeys: true,
     });
@@ -705,12 +720,13 @@ function getConfigForHost(): HostConfig {
   if (priceCheck.hotkeyLocked) {
     actions.push({
       shortcut: priceCheck.hotkeyLocked,
-      gamepadCombo: "L3 + RT",
+      gamepadCombo: priceCheck.gamepadHotkeyLocked || undefined, // fork: gamepad support
       action: { type: "copy-item", target: "price-check", focusOverlay: true },
     });
   }
   actions.push({
     shortcut: config.overlayKey,
+    gamepadCombo: config.gamepad.overlayCombo || undefined, // fork: gamepad support
     action: { type: "toggle-overlay" },
   });
   const itemCheck = AppConfig("item-check") as ItemCheckWidget;
@@ -747,6 +763,7 @@ function getConfigForHost(): HostConfig {
   if (itemCheck.hotkey) {
     actions.push({
       shortcut: itemCheck.hotkey,
+      gamepadCombo: itemCheck.gamepadHotkey || undefined, // fork: gamepad support
       action: { type: "copy-item", target: "item-check", focusOverlay: true },
     });
   }
@@ -763,6 +780,7 @@ function getConfigForHost(): HostConfig {
   if (delveGrid.toggleKey) {
     actions.push({
       shortcut: delveGrid.toggleKey,
+      gamepadCombo: delveGrid.gamepadHotkey || undefined, // fork: gamepad support
       action: { type: "trigger-event", target: "delve-grid" },
       keepModKeys: true,
     });

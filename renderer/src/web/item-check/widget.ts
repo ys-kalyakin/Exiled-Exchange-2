@@ -10,4 +10,5 @@ export interface ItemCheckWidget extends Widget {
   samePricedKey: string | null;
   samePricedType: "price" | "both";
   maps: MapCheckConfig;
+  gamepadHotkey: string | null; // fork: gamepad support
 }

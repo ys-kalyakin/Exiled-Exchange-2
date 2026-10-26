@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { Headers } from "node-fetch"; // Assuming you are using node-fetch
 import { Config, TipsFrequency } from "@/web/Config";
+import { defaultGamepadConfig } from "@/web/overlay/gamepad/config"; // fork: gamepad support
 
 vi.mock("@/web/Config", async () => {
   return {
@@ -159,6 +160,7 @@ export const defaultConfigMock = (overrides: Partial<Config> = {}) => {
     tipsFrequency: TipsFrequency.Always,
     readClientLog: false,
     hideOverlayOnBlur: false,
+    gamepad: defaultGamepadConfig(), // fork: gamepad support
   };
 
   mockConfig = { ...defaultConfig, ...overrides };

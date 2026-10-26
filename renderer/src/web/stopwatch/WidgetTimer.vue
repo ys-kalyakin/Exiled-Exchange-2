@@ -42,6 +42,7 @@ import { useI18n } from "vue-i18n";
 import Widget from "../overlay/Widget.vue";
 import { MainProcess } from "@/web/background/IPC";
 import { Duration } from "luxon";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 import {
   WidgetManager,
   StopwatchWidget,
@@ -63,6 +64,9 @@ export default defineComponent({
   },
   setup(props) {
     const wm = inject<WidgetManager>("wm")!;
+
+    // fork: gamepad support — navigable from the pad; B hides the widget
+    useGamepadWidgetScope(props.config);
 
     if (props.config.wmFlags[0] === "uninitialized") {
       props.config.anchor = {

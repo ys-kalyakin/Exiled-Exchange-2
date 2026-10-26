@@ -63,6 +63,7 @@ import { Host } from "@/web/background/IPC";
 import { AppConfig } from "@/web/Config";
 import { useI18nNs } from "@/web/i18n";
 import SingleItemSession from "./SingleItemSession.vue";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 
 function startSessionHost(name: string, header: string) {
   Host.sendEvent({
@@ -141,6 +142,9 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // fork: gamepad support — navigable from the pad; B hides the widget
+    useGamepadWidgetScope(props.config);
+
     const libEnabled = computed(
       () => AppConfig().enableAlphas && AppConfig().alphas.includes("library"),
     );

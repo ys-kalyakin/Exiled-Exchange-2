@@ -107,6 +107,7 @@ import { WidgetManager } from "./interfaces";
 import DndContainer from "vuedraggable";
 import Widget from "./Widget.vue";
 import FullscreenImage from "@/web/ui/FullscreenImage.vue";
+import { useGamepadWidgetScope } from "./gamepad/navigation"; // fork: gamepad support
 
 const props = defineProps<{
   config: ImageStripWidget;
@@ -115,6 +116,9 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const wm = inject<WidgetManager>("wm")!;
+
+// fork: gamepad support — navigable from the pad; B hides the widget
+useGamepadWidgetScope(props.config);
 
 if (props.config.wmFlags[0] === "uninitialized") {
   props.config.wmFlags = ["invisible-on-blur"];

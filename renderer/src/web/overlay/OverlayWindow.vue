@@ -85,6 +85,7 @@ import { useI18n } from "vue-i18n";
 import { Host } from "@/web/background/IPC";
 import { Widget, WidgetManager } from "./interfaces";
 import { registry } from "./widget-registry.js";
+import { useGamepadNavigation } from "./gamepad/navigation";
 import { AppConfig, saveConfig, pushHostConfig } from "@/web/Config";
 import LoadingAnimation from "./LoadingAnimation.vue";
 // ---
@@ -350,7 +351,7 @@ export default defineComponent({
       return size.value.height * ratio;
     });
 
-    provide<WidgetManager>("wm", {
+    const wmApi: WidgetManager = {
       poePanelWidth,
       size,
       active,
@@ -361,7 +362,11 @@ export default defineComponent({
       bringToTop,
       create,
       setFlag,
-    });
+    };
+
+    provide<WidgetManager>("wm", wmApi);
+
+    useGamepadNavigation(wmApi);
 
     function handleBackgroundClick() {
       if (AppConfig().overlayAlwaysClose) {
@@ -430,3 +435,16 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="postcss">
+/* gamepad navigation focus indicator (renderer/src/web/overlay/gamepad/) */
+.focused-gamepad {
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.gp-focused-row {
+  background: rgb(255 255 255 / 0.07);
+}
+</style>

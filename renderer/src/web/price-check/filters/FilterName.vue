@@ -1,5 +1,5 @@
 <template>
-  <div class="filter-name">
+  <div class="filter-name" data-gp-row>
     <button
       class="px-2 rounded border overflow-hidden text-ellipsis"
       :class="{

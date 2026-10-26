@@ -173,8 +173,20 @@ let tray: AppTray;
           kwinBridge.onShortcut((id) => {
             shortcuts.handleExternalShortcut(id);
           });
-          app.on("will-quit", () => {
-            void kwinBridge.stop();
+          let kwinCleanupDone = false;
+          app.on("will-quit", (event) => {
+            if (kwinCleanupDone) return;
+            // hold the quit until the bridge releases compositor state
+            // (scripts unloaded, layer rule removed); capped so a stuck
+            // DBus call cannot prevent quitting
+            event.preventDefault();
+            kwinCleanupDone = true;
+            void Promise.race([
+              kwinBridge.stop(),
+              new Promise((resolve) => setTimeout(resolve, 3000)),
+            ]).then(() => {
+              app.exit();
+            });
           });
           console.log("Wayland overlay backend started");
         } else {

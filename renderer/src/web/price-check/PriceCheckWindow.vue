@@ -18,6 +18,8 @@
       style="width: 28.75rem"
     >
       <AppTitleBar
+        data-gp-row
+        data-gp-section
         @close="closePriceCheck"
         @click="openLeagueSelection"
         :title="title"
@@ -87,6 +89,7 @@
           />
           <checked-item
             v-if="isLeagueSelected"
+            ref="checkedItem"
             :item="item.value"
             :advanced-check="advancedCheck"
           />
@@ -161,6 +164,7 @@ import {
   WidgetManager,
   WidgetSpec,
 } from "../overlay/interfaces";
+import { useGamepadNavScope } from "@/web/overlay/gamepad/navigation";
 import { loadUltraLateItems } from "@/assets/data";
 import ReloadTradeData from "./fallback/ReloadTradeData.vue";
 
@@ -207,6 +211,8 @@ export default defineComponent({
         rememberListingType: false,
         initialDelay: 48,
         savedAugments: {},
+        gamepadHotkey: "R3 + RT", // fork: gamepad support
+        gamepadHotkeyLocked: "L3 + RT", // fork: gamepad support
       };
     },
   } satisfies WidgetSpec,
@@ -403,6 +409,55 @@ export default defineComponent({
         });
       }
     }
+
+    // gamepad/keyboard navigation: B closes the window exactly like the
+    // close button (in the default config that unpins the overlay too),
+    // a further B with no window left unpins a passive overlay.
+    // Fork: runAction serves the shortcut buttons (X search, Y browser,
+    // LB preset); focusKey keys the focus memory by the item type.
+    const checkedItem = shallowRef<{
+      execSearch(): void;
+      selectNextPreset(): void;
+      makeTradeLink(): string;
+    } | null>(null);
+
+    useGamepadNavScope({
+      wmId: props.config.wmId,
+      canNavigate: () => props.config.wmWants === "show",
+      root: () => document.getElementById("price-window"),
+      requestClose: () => {
+        if (props.config.wmWants !== "show") return false;
+        closePriceCheck();
+        return true;
+      },
+      focusKey: () => {
+        if (item.value && item.value.isOk()) {
+          return item.value.value.category;
+        }
+        return undefined;
+      },
+      runAction: (action) => {
+        switch (action) {
+          case "search":
+            checkedItem.value?.execSearch();
+            return true;
+          case "browser":
+            if (isBrowserShown.value) {
+              closeBrowser();
+            } else {
+              const link = checkedItem.value?.makeTradeLink?.();
+              if (!link) return false;
+              showBrowser(link);
+            }
+            return true;
+          case "preset":
+            checkedItem.value?.selectNextPreset();
+            return true;
+          default:
+            return false;
+        }
+      },
+    });
 
     function openLeagueSelection() {
       const settings = wm.widgets.value.find((w) => w.wmType === "settings")!;
