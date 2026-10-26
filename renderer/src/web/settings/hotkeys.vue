@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-lg p-2">
     <div class="mb-2 bg-gray-700 rounded px-2 py-1 leading-none">
       <i class="fas fa-info-circle"></i> {{ t("settings.clear_hotkey") }}
     </div>
@@ -83,10 +83,13 @@ const hotkeys = computed<HotkeySchema[]>(() => {
             modKey: _configModelValue(priceCheckWidget, "hotkeyHold"),
             nonModKey: _configModelValue(priceCheckWidget, "hotkey"),
           },
+          // fork: gamepad support
+          gamepad: _configModelValue(priceCheckWidget, "gamepadHotkey"),
         },
         {
           translationKey: "price_check.hotkey_locked",
           config: _configModelValue(priceCheckWidget, "hotkeyLocked"),
+          gamepad: _configModelValue(priceCheckWidget, "gamepadHotkeyLocked"),
         },
       ],
     },
@@ -94,18 +97,22 @@ const hotkeys = computed<HotkeySchema[]>(() => {
       translationKey: "settings.overlay",
       config: _configModelValue(props.config, "overlayKey"),
       required: true,
+      gamepad: _configModelValue(props.config.gamepad, "overlayCombo"),
     },
     {
       translationKey: "map_check.name",
       config: _configModelValue(itemCheckWidget, "hotkey"),
+      gamepad: _configModelValue(itemCheckWidget, "gamepadHotkey"),
     },
     {
       translationKey: "item.info",
       config: _configModelValue(itemCheckWidget, "hotkey"),
+      gamepad: _configModelValue(itemCheckWidget, "gamepadHotkey"),
     },
     {
       translationKey: "settings.delve_grid",
       config: _configModelValue(delveGridWidget, "toggleKey"),
+      gamepad: _configModelValue(delveGridWidget, "gamepadHotkey"),
     },
   ];
 });

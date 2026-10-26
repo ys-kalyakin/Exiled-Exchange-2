@@ -22,6 +22,7 @@ import {
   gamepadConfigs,
   GamepadButton,
   GamepadEvent,
+  type StickValue,
 } from "gamepad-io";
 
 type UiohookKeyT = keyof typeof UiohookKey;
@@ -41,6 +42,9 @@ export class Shortcuts {
   // (re)maps combinations, so game focus cycles never stack handlers
   private gamepadComboActions = new Map<string, ShortcutAction>();
   private gamepadComboButtons = new Set<string>();
+  // fork: gamepad support — while the settings window is shown, combo
+  // participants are forwarded too, so the binding UI can record them
+  private gamepadCapture = false;
 
   static async create(
     logger: Logger,
@@ -105,7 +109,15 @@ export class Shortcuts {
     this.gamepad.on(GamepadEvent.UP, (button: GamepadButton) => {
       this.forwardGamepadButton(button, "up");
     });
+    // fork: gamepad support — left stick deflection for stick navigation
+    this.gamepad.on(
+      GamepadEvent.MOVE,
+      (stickName: GamepadButton, position: StickValue) => {
+        this.forwardGamepadAxis(stickName, position);
+      },
+    );
     this.gamepad.start();
+    this.gamepadCaptureSubscription();
     this.logKeys = true;
 
     this.poeWindow.on("active-change", (isActive) => {
@@ -299,6 +311,20 @@ export class Shortcuts {
         globalShortcut.unregister(shortcutToElectron(entry.shortcut));
       }
     }
+
+    // fork: gamepad support — combinations are user-configurable now, so a
+    // rebind (or clear) must remove the stale registration, otherwise the
+    // old combo keeps firing forever
+    const currentCombos = new Set(
+      this.actions.flatMap((entry) =>
+        entry.gamepadCombo ? [entry.gamepadCombo] : [],
+      ),
+    );
+    for (const name of this.gamepad.getCombinations()) {
+      if (currentCombos.has(name)) continue;
+      this.gamepad.unregisterCombination(name);
+      this.gamepadComboActions.delete(name);
+    }
   }
 
   private handleHotkey(entry: ShortcutAction) {
@@ -420,17 +446,41 @@ export class Shortcuts {
   }
 
   /**
-   * Forwards a raw gamepad button event to the renderer while the overlay is
-   * interactive. Buttons that participate in a registered combination have
-   * their own shortcut semantics and are not forwarded.
+   * Fork: gamepad support. Forwards a raw gamepad button event to the
+   * renderer while the overlay is interactive. Buttons that participate in a
+   * registered combination have their own shortcut semantics and are not
+   * forwarded — except while capture mode is on (settings window shown), so
+   * the binding UI can record them.
    */
   private forwardGamepadButton(button: GamepadButton, phase: "down" | "up") {
     if (!this.overlay.isInteractable) return;
-    if (this.gamepadComboButtons.has(button)) return;
+    if (this.gamepadComboButtons.has(button) && !this.gamepadCapture) return;
 
     this.server.sendEventTo("broadcast", {
       name: "MAIN->CLIENT::gamepad-input",
       payload: { button, phase },
+    });
+  }
+
+  /**
+   * Fork: gamepad support. Forwards left-stick deflection (values in
+   * [-1, 1]) to the renderer while the overlay is interactive; the
+   * dead-zone is applied renderer-side from the config.
+   */
+  private forwardGamepadAxis(stickName: GamepadButton, position: StickValue) {
+    if (stickName !== GamepadButton.LEFT_STICK) return;
+    if (!this.overlay.isInteractable) return;
+
+    this.server.sendEventTo("broadcast", {
+      name: "MAIN->CLIENT::gamepad-axis",
+      payload: { x: position.x, y: position.y },
+    });
+  }
+
+  /** Fork: gamepad support — capture mode follows the settings window. */
+  private gamepadCaptureSubscription() {
+    this.server.onEventAnyClient("OVERLAY->MAIN::gamepad-capture", (e) => {
+      this.gamepadCapture = e.capture;
     });
   }
 

@@ -1,9 +1,13 @@
 import type { InjectionKey } from "vue";
 
+/** In-overlay shortcut actions a gamepad button can trigger. */
+export type GpAction = "search" | "browser" | "preset" | "section";
+
 export type GpIntent =
   | { kind: "move"; axis: "row" | "control"; delta: 1 | -1 }
   | { kind: "activate" }
-  | { kind: "back" };
+  | { kind: "back" }
+  | { kind: "action"; action: GpAction };
 
 /**
  * A navigable overlay window. Intents are dispatched to the scope whose
@@ -17,6 +21,16 @@ export interface GamepadNavScope {
   root: () => HTMLElement | null | undefined;
   /** Back-chain step: close an open popover or the window; true = consumed. */
   requestClose: () => boolean;
+  /**
+   * Fork: gamepad support — identity used for focus memory across
+   * hide/show (for the price check window, the shown item's type).
+   */
+  focusKey?: () => string | undefined;
+  /**
+   * Fork: gamepad support — shortcut action intents (search, browser,
+   * preset) handled by the owning window; true = consumed.
+   */
+  runAction?: (action: GpAction) => boolean;
 }
 
 export interface GamepadScopeRegistry {

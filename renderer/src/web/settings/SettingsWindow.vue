@@ -111,6 +111,7 @@ import {
   inject,
   reactive,
   watch,
+  onBeforeUnmount,
 } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -131,6 +132,7 @@ import AppTitleBar from "@/web/ui/AppTitlebar.vue";
 import SettingsHotkeys from "./hotkeys.vue";
 import SettingsChat from "./chat.vue";
 import SettingsGeneral from "./general.vue";
+import SettingsGamepad from "./gamepad.vue"; // fork: gamepad support
 import SettingsAbout from "./about.vue";
 import SettingsPricecheck from "../price-check/settings-price-check.vue";
 import SettingsItemcheck from "../item-check/settings-item-check.vue";
@@ -203,6 +205,12 @@ export default defineComponent({
     watch(
       () => props.config.wmWants,
       (wmWants) => {
+        // fork: gamepad support — while the settings window is shown main
+        // forwards all gamepad buttons (capture mode) for the binding UI
+        Host.sendEvent({
+          name: "OVERLAY->MAIN::gamepad-capture",
+          payload: { capture: wmWants === "show" },
+        });
         if (wmWants === "show") {
           configClone.value = reactive(JSON.parse(JSON.stringify(AppConfig())));
           patrons.value = [1, 2, 3, 4, 5].map((i) =>
@@ -218,6 +226,13 @@ export default defineComponent({
         }
       },
     );
+
+    onBeforeUnmount(() => {
+      Host.sendEvent({
+        name: "OVERLAY->MAIN::gamepad-capture",
+        payload: { capture: false },
+      });
+    });
 
     const selectedWmId = shallowRef<number | null>(null);
     const configWidget = computed(() =>
@@ -353,6 +368,7 @@ function menuByType(type?: string) {
       return [
         [SettingsHotkeys, SettingsChat],
         [SettingsGeneral],
+        [SettingsGamepad], // fork: gamepad support
         [SettingsPricecheck, SettingsMaps, SettingsItemcheck],
         [SettingsLeveling],
         [SettingsHelp, SettingsDebug, SettingsAbout],

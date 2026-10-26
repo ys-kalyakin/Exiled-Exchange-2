@@ -1,5 +1,5 @@
 <template>
-  <div class="flex">
+  <div class="flex items-center">
     <label class="flex-1"
       >{{ t(schema.translationKey) }}
       <span v-if="schema.required" :class="$style.required">*</span></label
@@ -7,7 +7,7 @@
     <HotkeyInput
       v-if="'value' in schema.config"
       v-model="schema.config.value"
-      class="w-48"
+      class="w-36"
       :required="schema.required"
     />
     <div
@@ -16,7 +16,7 @@
         $style.splitKey,
         { [$style.unset]: !schema.config.modKey.value },
       ]"
-      class="w-48"
+      class="w-36"
     >
       <button
         :class="{ [$style.active]: schema.config.modKey.value === 'Ctrl' }"
@@ -38,6 +38,13 @@
         no-mod-keys
       />
     </div>
+    <!-- fork: gamepad support — optional gamepad combo binding -->
+    <GamepadComboInput
+      v-if="schema.gamepad"
+      v-model="schema.gamepad.value"
+      class="w-28 ml-4"
+    />
+    <div v-else class="w-28 ml-4" />
   </div>
 </template>
 
@@ -45,6 +52,7 @@
 import { useI18n } from "vue-i18n";
 
 import HotkeyInput from "../settings/HotkeyInput.vue";
+import GamepadComboInput from "../settings/GamepadComboInput.vue";
 
 export interface HotkeySchema {
   readonly translationKey: string;
@@ -54,6 +62,8 @@ export interface HotkeySchema {
         readonly modKey: { value: string | null };
         readonly nonModKey: { value: string | null };
       };
+  // fork: gamepad support — optional gamepad combo binding for this entry
+  readonly gamepad?: { value: string | null };
   readonly required?: boolean;
 }
 

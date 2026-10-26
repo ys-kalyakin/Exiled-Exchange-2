@@ -143,6 +143,32 @@ export function stepSelect(select: HTMLSelectElement, delta: 1 | -1) {
   select.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+/**
+ * Fork: gamepad support — computes the focus state after a section jump:
+ * the first row of the next section after the current row's section,
+ * wrapping around. `rowSections` maps each row index to its section index
+ * (-1 = outside any section). Returns null when there is nothing to jump to.
+ */
+export function jumpToNextSection(
+  state: GpFocusState,
+  rowSections: number[],
+  sectionCount: number,
+): GpFocusState | null {
+  if (sectionCount <= 0 || !rowSections.length) return null;
+  const currentRow = state.engaged
+    ? clampIndex(state.rowIndex, rowSections.length)
+    : -1;
+  const current = currentRow >= 0 ? rowSections[currentRow] : -1;
+  for (let step = 1; step <= sectionCount; step++) {
+    const target = (((current + step) % sectionCount) + sectionCount) % sectionCount;
+    const firstRow = rowSections.indexOf(target);
+    if (firstRow !== -1) {
+      return { engaged: true, rowIndex: firstRow, controlIndex: 0 };
+    }
+  }
+  return null;
+}
+
 if (import.meta.vitest) {
   const { it, expect } = import.meta.vitest;
 
@@ -191,5 +217,48 @@ if (import.meta.vitest) {
     expect(moveControl(state, 1, 4).controlIndex).toBe(3);
     expect(moveControl(state, 1, 2).controlIndex).toBe(1);
     expect(moveControl(state, -1, 2).controlIndex).toBe(1);
+  });
+
+  it("jumps to the first row of the next section, wrapping", () => {
+    // rows 0-1 in section 0, rows 2-3 in section 1, row 4 in section 2
+    const rowSections = [0, 0, 1, 1, 2];
+    const state = { engaged: true, rowIndex: 1, controlIndex: 1 };
+
+    expect(jumpToNextSection(state, rowSections, 3)).toEqual({
+      engaged: true,
+      rowIndex: 2,
+      controlIndex: 0,
+    });
+    expect(jumpToNextSection({ ...state, rowIndex: 3 }, rowSections, 3)).toEqual({
+      engaged: true,
+      rowIndex: 4,
+      controlIndex: 0,
+    });
+    expect(jumpToNextSection({ ...state, rowIndex: 4 }, rowSections, 3)).toEqual({
+      engaged: true,
+      rowIndex: 0,
+      controlIndex: 0,
+    });
+  });
+
+  it("jumps from a disengaged state to the first section", () => {
+    const rowSections = [0, 0, 1, 1];
+    expect(jumpToNextSection(initialFocusState(), rowSections, 2)).toEqual({
+      engaged: true,
+      rowIndex: 0,
+      controlIndex: 0,
+    });
+  });
+
+  it("skips sections without rows and reports nothing to jump to", () => {
+    // section 0 has no rows; the jump from section 1 wraps into section 2
+    const rowSections = [-1, 1, 2];
+    expect(jumpToNextSection({ engaged: true, rowIndex: 1, controlIndex: 0 }, rowSections, 3)).toEqual({
+      engaged: true,
+      rowIndex: 2,
+      controlIndex: 0,
+    });
+    expect(jumpToNextSection(initialFocusState(), [0, 0], 0)).toBeNull();
+    expect(jumpToNextSection(initialFocusState(), [-1, -1], 1)).toBeNull();
   });
 }
