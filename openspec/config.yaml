@@ -8,7 +8,9 @@ context: |
   This repository is a fork of Kvan7/Exiled-Exchange-2 that adds gamepad support:
   the `gamepad-io` dependency, the `gamepadCombo` field on `ShortcutAction`
   (defaults `R3 + RT` for price check, `L3 + RT` for locked price check),
-  the 8BitDo Pro 2 profile, and the gamepad B button toggling the overlay.
+  the 8BitDo Pro 2 profile, and the gamepad B button as a back chain while the
+  overlay is active (closes the topmost popover or window, otherwise unpins the
+  overlay); B is never intercepted while the overlay is passive — the game owns it.
   Every change MUST keep this feature compiling and working.
   The fork tracks upstream and is periodically merged with Kvan7/Exiled-Exchange-2
   (remote `upstream`). Keep files shared with upstream mergeable: do not reformat

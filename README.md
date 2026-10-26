@@ -9,7 +9,7 @@ This is a fork of [Kvan7/Exiled-Exchange-2](https://github.com/Kvan7/Exiled-Exch
 
 ## What this fork changes
 
-- **Gamepad support.** Price check with `R3 + RT`, locked price check with `L3 + RT`, and the gamepad B button toggles the overlay. Overlay windows can be driven with the gamepad (d-pad navigation, auto-repeat, popover handling), and the settings UI includes gamepad configuration. The 8BitDo Pro 2 profile is included.
+- **Gamepad support.** Open the overlay with `R3 + RT` (price check) or `L3 + RT` (locked price check) and drive it with the gamepad: d-pad navigation with auto-repeat, popover handling, and a back chain on B that closes the topmost popover or window and unpins the overlay when nothing is left to close. The game keeps the B button while the overlay is closed. The settings UI includes gamepad configuration, and the 8BitDo Pro 2 profile is included.
 - **Native KDE Plasma 6 Wayland overlay.** On KDE Wayland sessions the overlay runs through a KWin script bridge instead of XWayland, with game window tracking, overlay positioning and global shortcuts handled through KWin. X11 sessions are unaffected.
 - **Linux builds.** Releases include a Linux AppImage with automatic updates alongside the Windows installer and portable builds.
 - **Tag-driven releases.** Pushing a `v*` tag builds and publishes Windows and Linux artifacts with auto-update feeds on this repository's [Releases](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases) page.
