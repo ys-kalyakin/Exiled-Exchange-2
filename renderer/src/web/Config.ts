@@ -720,8 +720,7 @@ function getConfigForHost(): HostConfig {
   if (priceCheck.hotkeyLocked) {
     actions.push({
       shortcut: priceCheck.hotkeyLocked,
-      gamepadCombo:
-        priceCheck.gamepadHotkeyLocked || undefined, // fork: gamepad support
+      gamepadCombo: priceCheck.gamepadHotkeyLocked || undefined, // fork: gamepad support
       action: { type: "copy-item", target: "price-check", focusOverlay: true },
     });
   }

@@ -46,10 +46,7 @@
     <div class="flex flex-col gap-1 pl-2 mb-4">
       <div v-for="button of buttons" :key="button" class="flex items-center">
         <label class="flex-1 font-poe">{{ button }}</label>
-        <select
-          v-model="models[button]"
-          class="p-1 rounded bg-gray-700 w-52"
-        >
+        <select v-model="models[button]" class="p-1 rounded bg-gray-700 w-52">
           <option
             v-for="opt of optionsFor(button)"
             :key="opt.id"

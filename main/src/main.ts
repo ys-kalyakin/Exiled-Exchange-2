@@ -184,7 +184,9 @@ let tray: AppTray;
             void Promise.race([
               kwinBridge.stop(),
               new Promise((resolve) => setTimeout(resolve, 3000)),
-            ]).then(() => app.exit());
+            ]).then(() => {
+              app.exit();
+            });
           });
           console.log("Wayland overlay backend started");
         } else {

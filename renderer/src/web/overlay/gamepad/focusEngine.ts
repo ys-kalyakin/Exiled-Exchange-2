@@ -111,9 +111,9 @@ export function synthesizeRows(
       if (controlSet.has(child)) {
         direct.push(child);
       } else if (
-        Array.from(
-          child.querySelectorAll<HTMLElement>(CONTROL_SELECTOR),
-        ).some((c) => controlSet.has(c))
+        Array.from(child.querySelectorAll<HTMLElement>(CONTROL_SELECTOR)).some(
+          (c) => controlSet.has(c),
+        )
       ) {
         containers.push(child);
       }
@@ -246,7 +246,8 @@ export function jumpToNextSection(
     : -1;
   const current = currentRow >= 0 ? rowSections[currentRow] : -1;
   for (let step = 1; step <= sectionCount; step++) {
-    const target = (((current + step) % sectionCount) + sectionCount) % sectionCount;
+    const target =
+      (((current + step) % sectionCount) + sectionCount) % sectionCount;
     const firstRow = rowSections.indexOf(target);
     if (firstRow !== -1) {
       return { engaged: true, rowIndex: firstRow, controlIndex: 0 };
@@ -315,12 +316,16 @@ if (import.meta.vitest) {
       rowIndex: 2,
       controlIndex: 0,
     });
-    expect(jumpToNextSection({ ...state, rowIndex: 3 }, rowSections, 3)).toEqual({
+    expect(
+      jumpToNextSection({ ...state, rowIndex: 3 }, rowSections, 3),
+    ).toEqual({
       engaged: true,
       rowIndex: 4,
       controlIndex: 0,
     });
-    expect(jumpToNextSection({ ...state, rowIndex: 4 }, rowSections, 3)).toEqual({
+    expect(
+      jumpToNextSection({ ...state, rowIndex: 4 }, rowSections, 3),
+    ).toEqual({
       engaged: true,
       rowIndex: 0,
       controlIndex: 0,
@@ -339,7 +344,13 @@ if (import.meta.vitest) {
   it("skips sections without rows and reports nothing to jump to", () => {
     // section 0 has no rows; the jump from section 1 wraps into section 2
     const rowSections = [-1, 1, 2];
-    expect(jumpToNextSection({ engaged: true, rowIndex: 1, controlIndex: 0 }, rowSections, 3)).toEqual({
+    expect(
+      jumpToNextSection(
+        { engaged: true, rowIndex: 1, controlIndex: 0 },
+        rowSections,
+        3,
+      ),
+    ).toEqual({
       engaged: true,
       rowIndex: 2,
       controlIndex: 0,
@@ -383,8 +394,7 @@ if (import.meta.vitest) {
       parentElement: null,
       visible: opts.visible ?? true,
       disabled: opts.disabled ?? false,
-      isControl:
-        opts.control ?? ["button", "input", "select"].includes(tag),
+      isControl: opts.control ?? ["button", "input", "select"].includes(tag),
       gpRow: opts.row ?? false,
       order: 0,
       getClientRects: () => (node.visible ? [{}] : []),
@@ -511,7 +521,12 @@ if (import.meta.vitest) {
 
     const rows = synthesizeRows(asHtml(page));
 
-    expect(rows).toEqual([asHtml(cb1), asHtml(cb2), asHtml(block1), asHtml(block2)]);
+    expect(rows).toEqual([
+      asHtml(cb1),
+      asHtml(cb2),
+      asHtml(block1),
+      asHtml(block2),
+    ]);
     expect(collectControls(asHtml(cb1))).toEqual([asHtml(cb1)]);
   });
 
@@ -600,10 +615,14 @@ if (import.meta.vitest) {
     indexTree(root);
 
     const scrolled: unknown[] = [];
-    applyFocusVisual(asHtml(root), { engaged: true, rowIndex: 1, controlIndex: 0 }, {
-      rows: [asHtml(row1), asHtml(row2)],
-      scrollIntoView: (control) => scrolled.push(control),
-    });
+    applyFocusVisual(
+      asHtml(root),
+      { engaged: true, rowIndex: 1, controlIndex: 0 },
+      {
+        rows: [asHtml(row1), asHtml(row2)],
+        scrollIntoView: (control) => scrolled.push(control),
+      },
+    );
 
     expect(scrolled).toEqual([row2.children[0]]);
   });
@@ -618,7 +637,11 @@ if (import.meta.vitest) {
     };
     control.scrollIntoView = (...args: unknown[]) => calls.push(args);
 
-    applyFocusVisual(asHtml(root), { engaged: true, rowIndex: 0, controlIndex: 0 });
+    applyFocusVisual(asHtml(root), {
+      engaged: true,
+      rowIndex: 0,
+      controlIndex: 0,
+    });
 
     expect(calls).toEqual([[{ block: "nearest" }]]);
   });

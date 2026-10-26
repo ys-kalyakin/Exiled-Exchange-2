@@ -1,6 +1,10 @@
 import { Host } from "@/web/background/IPC";
 import { isGamepadCaptureArmed, setGamepadCaptureArmed } from "./capture";
-import { GAMEPAD_BUTTON_INTENTS, KEYBOARD_KEY_INTENTS, isDirectional } from "./buttonMap";
+import {
+  GAMEPAD_BUTTON_INTENTS,
+  KEYBOARD_KEY_INTENTS,
+  isDirectional,
+} from "./buttonMap";
 import type { GamepadConfig } from "./config";
 import type { GpIntent } from "./types";
 
@@ -101,7 +105,7 @@ export function createIntentSource(options: IntentSourceOptions) {
     button: string,
   ): GpIntent | "unmapped" | undefined {
     return config
-      ? config.buttonIntents[button] ?? GAMEPAD_BUTTON_INTENTS[button]
+      ? (config.buttonIntents[button] ?? GAMEPAD_BUTTON_INTENTS[button])
       : GAMEPAD_BUTTON_INTENTS[button];
   }
 
@@ -349,10 +353,7 @@ if (import.meta.vitest) {
     gamepadListener!("A", "down");
     gamepadListener!("B", "down");
     vi.advanceTimersByTime(1000);
-    expect(intents).toEqual([
-      { kind: "activate" },
-      { kind: "back" },
-    ]);
+    expect(intents).toEqual([{ kind: "activate" }, { kind: "back" }]);
 
     source.dispose();
     vi.useRealTimers();

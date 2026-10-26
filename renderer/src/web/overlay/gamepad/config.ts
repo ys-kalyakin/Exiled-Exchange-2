@@ -42,9 +42,9 @@ export function upgradeGamepadConfig(config: {
     config.gamepad = defaultGamepadConfig();
   }
 
-  const priceCheck = config.widgets.find(
-    (w) => w.wmType === "price-check",
-  ) as Record<string, unknown> | undefined;
+  const priceCheck = config.widgets.find((w) => w.wmType === "price-check") as
+    | Record<string, unknown>
+    | undefined;
   if (priceCheck && priceCheck.gamepadHotkey === undefined) {
     priceCheck.gamepadHotkey = "R3 + RT";
   }

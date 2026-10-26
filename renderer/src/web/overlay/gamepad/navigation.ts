@@ -28,10 +28,7 @@ import type {
   GamepadScopeRegistry,
   GpIntent,
 } from "./types";
-import {
-  gamepadPopoverRegistryKey,
-  gamepadScopeRegistryKey,
-} from "./types";
+import { gamepadPopoverRegistryKey, gamepadScopeRegistryKey } from "./types";
 
 export interface NavigatorDeps {
   topScope: () => GamepadNavScope | undefined;
@@ -272,9 +269,7 @@ export function useGamepadNavigation(wm: WidgetManager) {
     const topmost = shownWidgets.reduce((top, w) =>
       zorder(w) > zorder(top) ? w : top,
     );
-    return scopes.value.find(
-      (s) => s.wmId === topmost.wmId && s.canNavigate(),
-    );
+    return scopes.value.find((s) => s.wmId === topmost.wmId && s.canNavigate());
   }
 
   const navigator = createGamepadNavigator({
@@ -349,8 +344,7 @@ export function useGamepadWidgetScope(
     wmId: config.wmId,
     canNavigate: () => config.wmWants === "show",
     root:
-      options.root ??
-      (() => document.getElementById(`widget-${config.wmId}`)),
+      options.root ?? (() => document.getElementById(`widget-${config.wmId}`)),
     requestClose:
       options.requestClose ??
       (() => {
