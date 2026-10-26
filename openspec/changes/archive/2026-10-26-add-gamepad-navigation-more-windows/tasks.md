@@ -26,7 +26,7 @@
 
 - [x] 5.1 Re-verify the price check window against the existing v1 scenarios (two-level movement, lazy entry, focus memory per item type, popover-aware B chain, X/Y/LB/RB actions) in the dev app, confirming no visual or behavioral change from synthesis and scrolling.
 - [x] 5.2 Run the full check suite: `cd renderer && npm run lint && npm run check-types && npm run test` and `cd main && npm run lint && npm run check-types` (main must be untouched — a clean run confirms it), plus `pre-commit run --all-files`.
-- [ ] 5.3 Manual gamepad pass on KDE Plasma 6 Wayland with the 8BitDo pad: settings, map check, widget menu and one simple widget navigated from the pad, including a combo capture round-trip; note any X11/Windows follow-ups in the roadmap document (`docs/gamepad-roadmap.md` Phase 3 status).
+- [x] 5.3 Manual gamepad pass on KDE Plasma 6 Wayland with the 8BitDo pad: settings, map check, widget menu and one simple widget navigated from the pad, including a combo capture round-trip; note any X11/Windows follow-ups in the roadmap document (`docs/gamepad-roadmap.md` Phase 3 status).
 
 ## Workflow follow-up
 
