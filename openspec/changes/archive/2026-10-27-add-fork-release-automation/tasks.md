@@ -27,7 +27,8 @@
 ## 5. Repo settings (manual, no file edits)
 
 - [ ] 5.1 Disable the upstream `Build` workflow in the fork's Actions settings (Actions → Build → "···" → Disable). Verify: it no longer starts on the next master push.
-- [ ] 5.2 Disable the `Docs` workflow the same way. Verify: no more failed Docs runs on `docs/**` pushes.
+- [x] 5.2 Disable the `Docs` workflow the same way. Verify: no more failed Docs runs on `docs/**` pushes.
+  - Note (2026-10-27): disabled via repo settings — GitHub Actions API reports the Docs workflow state as `deleted`; it will not start again.
 
 ## Workflow follow-up
 
