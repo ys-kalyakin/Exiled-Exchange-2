@@ -102,12 +102,16 @@ import type { WidgetManager } from "../overlay/interfaces.js";
 
 import Widget from "../overlay/Widget.vue";
 import UiToggle from "@/web/ui/UiToggle.vue";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 
 const props = defineProps<{
   config: StashSearchWidget;
 }>();
 
 const wm = inject<WidgetManager>("wm")!;
+
+// fork: gamepad support — navigable from the pad; B hides the widget
+useGamepadWidgetScope(props.config);
 
 if (props.config.wmFlags[0] === "uninitialized") {
   props.config.wmFlags = ["invisible-on-blur"];

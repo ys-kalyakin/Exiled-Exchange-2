@@ -128,6 +128,7 @@ import type {
   WidgetManager,
   WidgetSpec,
 } from "@/web/overlay/interfaces";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 import AppTitleBar from "@/web/ui/AppTitlebar.vue";
 import SettingsHotkeys from "./hotkeys.vue";
 import SettingsChat from "./chat.vue";
@@ -191,6 +192,10 @@ export default defineComponent({
   setup(props) {
     const wm = inject<WidgetManager>("wm")!;
     const { t } = useI18n();
+
+    // fork: gamepad support — the settings window is navigable from the
+    // pad; B cancels it exactly like the title bar close button (Cancel)
+    useGamepadWidgetScope(props.config);
 
     nextTick(() => {
       props.config.wmWants = "hide";

@@ -31,6 +31,12 @@ export interface GamepadNavScope {
    * preset) handled by the owning window; true = consumed.
    */
   runAction?: (action: GpAction) => boolean;
+  /**
+   * Fork: gamepad support — derive rows from the DOM for windows without
+   * `data-gp-row` markers (visible, enabled controls grouped by their row
+   * container). Explicit markers, where present, take precedence.
+   */
+  synthesizeRows?: boolean;
 }
 
 export interface GamepadScopeRegistry {

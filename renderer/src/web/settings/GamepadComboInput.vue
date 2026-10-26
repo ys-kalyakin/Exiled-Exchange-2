@@ -38,6 +38,7 @@
 import { onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Host } from "@/web/background/IPC";
+import { setGamepadCaptureArmed } from "@/web/overlay/gamepad/capture";
 
 defineProps<{
   modelValue: string | null;
@@ -61,6 +62,8 @@ function stop() {
   timeout = undefined;
   pressed = null;
   capturing.value = false;
+  // recording ended (commit, cancel, timeout or unmount): navigation resumes
+  setGamepadCaptureArmed(false);
 }
 
 function toggleCapture() {
@@ -70,6 +73,7 @@ function toggleCapture() {
   }
   capturing.value = true;
   pressed = new Set();
+  setGamepadCaptureArmed(true);
   const controller = Host.onEvent("MAIN->CLIENT::gamepad-input", (e) => {
     if (!pressed) return;
     // the released button was held until now, so it is part of the combo

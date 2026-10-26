@@ -1,4 +1,5 @@
 import { Host } from "@/web/background/IPC";
+import { isGamepadCaptureArmed, setGamepadCaptureArmed } from "./capture";
 import { GAMEPAD_BUTTON_INTENTS, KEYBOARD_KEY_INTENTS, isDirectional } from "./buttonMap";
 import type { GamepadConfig } from "./config";
 import type { GpIntent } from "./types";
@@ -110,6 +111,11 @@ export function createIntentSource(options: IntentSourceOptions) {
     options.subscribeKeyboard ?? defaultSubscribeKeyboard;
 
   const offGamepad = subscribeGamepad((button, phase) => {
+    // a combo capture in the settings window is recording these buttons
+    if (isGamepadCaptureArmed()) {
+      if (phase === "up") releaseHeld();
+      return;
+    }
     const config = options.getGamepadConfig?.();
     if (config && !config.navigationEnabled) {
       if (phase === "up") releaseHeld();
@@ -122,6 +128,11 @@ export function createIntentSource(options: IntentSourceOptions) {
   });
 
   const offAxis = subscribeAxis((x, y) => {
+    if (isGamepadCaptureArmed()) {
+      stickHolds = false;
+      releaseHeld();
+      return;
+    }
     const config = options.getGamepadConfig?.();
     if (config && !config.navigationEnabled) {
       // treat as centered so a re-enabled stick starts from a clean state
@@ -559,6 +570,51 @@ if (import.meta.vitest) {
     axisListener!(0, 0.9);
     expect(intents).toEqual([]);
 
+    source.dispose();
+  });
+
+  it("drops gamepad input while a combo capture is armed", () => {
+    vi.useFakeTimers();
+    const intents: GpIntent[] = [];
+    const { source, gamepadListener } = createTestSource(intents);
+
+    setGamepadCaptureArmed(true);
+    gamepadListener!("DPAD_DOWN", "down");
+    vi.advanceTimersByTime(1000);
+    expect(intents).toEqual([]);
+
+    setGamepadCaptureArmed(false);
+    gamepadListener!("DPAD_DOWN", "down");
+    expect(intents).toEqual([{ kind: "move", axis: "row", delta: 1 }]);
+
+    source.dispose();
+    vi.useRealTimers();
+  });
+
+  it("drops stick input while a combo capture is armed", () => {
+    const intents: GpIntent[] = [];
+    const { source, axisListener } = createTestSource(intents);
+
+    setGamepadCaptureArmed(true);
+    axisListener!(0, 0.9);
+    expect(intents).toEqual([]);
+
+    setGamepadCaptureArmed(false);
+    axisListener!(0, 0.9);
+    expect(intents).toEqual([{ kind: "move", axis: "row", delta: 1 }]);
+
+    source.dispose();
+  });
+
+  it("keeps keyboard navigation alive while a combo capture is armed", () => {
+    const intents: GpIntent[] = [];
+    const { source, keyboardListener } = createTestSource(intents);
+
+    setGamepadCaptureArmed(true);
+    keyboardListener!("ArrowDown", "down", false);
+    expect(intents).toEqual([{ kind: "move", axis: "row", delta: 1 }]);
+
+    setGamepadCaptureArmed(false);
     source.dispose();
   });
 }

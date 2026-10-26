@@ -274,6 +274,7 @@ import { ItemCategory } from "@/parser";
 import ItemQuickPrice from "@/web/ui/ItemQuickPrice.vue";
 import Widget from "../overlay/Widget.vue";
 import UiTimeout from "@/web/ui/UiTimeout.vue";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 
 const props = defineProps<{
   config: ItemSearchWidget;
@@ -281,6 +282,9 @@ const props = defineProps<{
 
 const wm = inject<WidgetManager>("wm")!;
 const { t } = useI18nNs("item_search");
+
+// fork: gamepad support — navigable from the pad; B hides the widget
+useGamepadWidgetScope(props.config);
 const { findPriceByQuery, autoCurrency, queuePricesFetch } = usePoeninja();
 
 const showTimeout = shallowRef<{ reset: () => void } | null>(null);

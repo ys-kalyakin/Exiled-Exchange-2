@@ -59,15 +59,28 @@ validated it on KDE Plasma 6 Wayland with an 8BitDo pad.
 
 ## Phase 3 — More windows
 
-The scope/layer mechanism is window-agnostic; populating a window is
-`data-gp` markers + `useGamepadNavScope` registration:
+**Shipped in `add-gamepad-navigation-more-windows` (v2), pending hardware
+regression.** The scope/layer mechanism proved window-agnostic: populating a
+window is scope registration (`useGamepadWidgetScope`) + optional
+`data-gp` markers; windows without markers get DOM-derived rows
+(`synthesizeRows` — recursive partition, one row per layout block, bare
+controls become singleton rows) and the focused control scrolls into view.
+Gamepad navigation no longer fires while a combo capture is armed.
 
-1. **Widget menu** (open/close widgets from the pad — currently unreachable).
-2. **Map check** widget (the most mouse-heavy widget after price check).
-3. **Item check, stash search, notepad, library, stopwatch.**
-4. **Item editor** (numeric inputs and toggles; no text entry yet).
-5. **Settings window** — largest surface; consider section-level navigation
-   (page jump with LB/RB) rather than flat two-level focus.
+1. ~~**Widget menu**~~ shipped (chips row + A toggles widgets; B falls through
+   to unpin — the menu has no close control).
+2. ~~**Map check**~~ shipped (stat rows cycle the decision with A; B hides).
+3. ~~**Item check, stash search, notepad, library, stopwatch**~~ registered
+   (library is inert until the alpha is enabled; image strip included too).
+4. ~~**Item editor**~~ numeric inputs step with left/right like any control;
+   no text entry yet.
+5. ~~**Settings window**~~ shipped via DOM-derived rows (no per-page markers
+   needed); B cancels, focus memory restores the last row per window.
+
+Follow-ups found during v2 verification: arming a combo capture with the
+gamepad A button records "A" immediately (arm with the mouse, or accept the
+first press as part of the combo); menu popover content is tippy-teleported
+and therefore not row-navigable (B still closes it).
 
 ## Phase 4 — Advanced input
 

@@ -59,6 +59,7 @@ import {
   NotepadWidget,
 } from "@/web/overlay/interfaces";
 import { useI18nNs } from "@/web/i18n";
+import { useGamepadWidgetScope } from "@/web/overlay/gamepad/navigation"; // fork: gamepad support
 
 enum WidgetWidth {
   Small = 0,
@@ -81,6 +82,9 @@ export default defineComponent({
   },
   setup(props) {
     const wm = inject<WidgetManager>("wm")!;
+
+    // fork: gamepad support — navigable from the pad; B hides the widget
+    useGamepadWidgetScope(props.config);
 
     if (props.config.wmFlags[0] === "uninitialized") {
       const config = props.config;

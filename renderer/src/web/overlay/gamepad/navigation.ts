@@ -20,6 +20,7 @@ import {
   initialFocusState,
   jumpToNextSection,
   stepSelect,
+  synthesizeRows,
 } from "./focusEngine";
 import type {
   GamepadNavScope,
@@ -37,6 +38,20 @@ export interface NavigatorDeps {
   findScope: (wmId: number) => GamepadNavScope | undefined;
   getPopoverClosers: () => Array<() => void>;
   closeOverlay: () => void;
+}
+
+/**
+ * Rows of a scope's window: explicit `data-gp-row` markers when present
+ * (also for scopes without synthesis), otherwise — for scopes that opted
+ * in — rows derived from the DOM structure.
+ */
+export function rowsForScope(
+  scope: GamepadNavScope,
+  root: HTMLElement,
+): HTMLElement[] {
+  const marked = collectRows(root);
+  if (!scope.synthesizeRows || marked.length) return marked;
+  return synthesizeRows(root);
 }
 
 /**
@@ -106,12 +121,14 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
 
     if (intent.kind === "activate") {
       if (!focusState.engaged) return;
-      const focused = applyFocusVisual(root, focusState);
+      const focused = applyFocusVisual(root, focusState, {
+        rows: rowsForScope(scope, root),
+      });
       if (focused) activateControl(focused.control);
       return;
     }
 
-    const rows = collectRows(root);
+    const rows = rowsForScope(scope, root);
     if (!rows.length) {
       focusState = { ...focusState, engaged: false };
       clearFocusVisual(root);
@@ -136,7 +153,7 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
           Math.max(controls.length - 1, 0),
         );
       }
-      applyFocusVisual(root, focusState);
+      applyFocusVisual(root, focusState, { rows });
       return;
     }
 
@@ -166,13 +183,13 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
         controlIndex: clampIndex(controlIndex + intent.delta, controls.length),
       };
     }
-    applyFocusVisual(root, focusState);
+    applyFocusVisual(root, focusState, { rows });
   }
 
   function jumpSection(scope: GamepadNavScope) {
     const root = scope.root();
     if (!root) return;
-    const rows = collectRows(root);
+    const rows = rowsForScope(scope, root);
     const sections = Array.from(
       root.querySelectorAll<HTMLElement>("[data-gp-section]"),
     );
@@ -183,7 +200,7 @@ export function createGamepadNavigator(deps: NavigatorDeps) {
     if (!target) return;
     resetFocusFor(scope);
     focusState = target;
-    applyFocusVisual(root, focusState);
+    applyFocusVisual(root, focusState, { rows });
   }
 
   function handleBack() {
@@ -314,6 +331,37 @@ export function useGamepadNavScope(scope: GamepadNavScope) {
   onBeforeUnmount(() => remove?.());
 }
 
+/**
+ * Fork: gamepad support — registers a Widget-wrapper-based widget as a
+ * navigable scope with DOM-derived rows. The root is the widget's mounted
+ * element (`#widget-<id>`); B hides the widget the way its own close button
+ * does, unless `requestClose` overrides the behavior.
+ */
+export function useGamepadWidgetScope(
+  config: Widget,
+  options: {
+    requestClose?: () => boolean;
+    root?: () => HTMLElement | null | undefined;
+  } = {},
+) {
+  const wm = inject<WidgetManager | null>("wm", null);
+  useGamepadNavScope({
+    wmId: config.wmId,
+    canNavigate: () => config.wmWants === "show",
+    root:
+      options.root ??
+      (() => document.getElementById(`widget-${config.wmId}`)),
+    requestClose:
+      options.requestClose ??
+      (() => {
+        if (!wm || config.wmWants !== "show") return false;
+        wm.hide(config.wmId);
+        return true;
+      }),
+    synthesizeRows: true,
+  });
+}
+
 if (import.meta.vitest) {
   const { it, expect } = import.meta.vitest;
 
@@ -323,6 +371,7 @@ if (import.meta.vitest) {
       disabled: false,
       getClientRects: () => [{}, {}],
       classList: { add() {}, remove() {} },
+      matches: () => false,
     };
   }
 
@@ -337,6 +386,7 @@ if (import.meta.vitest) {
           add: (c: string) => classes.add(c),
           remove: (c: string) => classes.delete(c),
         },
+        matches: () => false,
         querySelectorAll: () =>
           Array.from({ length: controls }, () => fakeControl()),
       };
@@ -502,5 +552,129 @@ if (import.meta.vitest) {
     navigator.dispatch({ kind: "move", axis: "row", delta: 1 });
 
     expect(rootRef.current.rowClasses[0].has("gp-focused-row")).toBe(true);
+  });
+
+  // richer tree stub for the synthesis routing: parent links, contains,
+  // document order and the selectors the engine queries
+  interface TreeEl {
+    children: TreeEl[];
+    parentElement: TreeEl | null;
+    visible: boolean;
+    isControl: boolean;
+    gpRow: boolean;
+    order: number;
+    classes: Set<string>;
+    getClientRects(): unknown[];
+    classList: { add(c: string): void; remove(c: string): void };
+    matches(selector: string): boolean;
+    querySelectorAll(selector: string): TreeEl[];
+    contains(other: TreeEl | null): boolean;
+    compareDocumentPosition(other: TreeEl): number;
+  }
+
+  function treeNode(
+    opts: { visible?: boolean; control?: boolean; row?: boolean } = {},
+    children: TreeEl[] = [],
+  ): TreeEl {
+    const node: TreeEl = {
+      children: [],
+      parentElement: null,
+      visible: opts.visible ?? true,
+      isControl: opts.control ?? false,
+      gpRow: opts.row ?? false,
+      order: 0,
+      classes: new Set(),
+      getClientRects: () => (node.visible ? [{}] : []),
+      classList: {
+        add: (c) => node.classes.add(c),
+        remove: (c) => node.classes.delete(c),
+      },
+      matches: (selector: string) =>
+        selector !== "[data-gp-row]" && node.isControl,
+      contains(other) {
+        return node.children.some(
+          (child) => child === other || child.contains(other),
+        );
+      },
+      compareDocumentPosition(other) {
+        return other.order > node.order ? 4 : 2;
+      },
+      querySelectorAll(selector: string) {
+        const out: TreeEl[] = [];
+        const visit = (n: TreeEl) => {
+          for (const child of n.children) {
+            if (
+              selector === "[data-gp-row]"
+                ? child.gpRow
+                : selector === "[data-gp-section]"
+                  ? false
+                  : child.isControl
+            ) {
+              out.push(child);
+            }
+            visit(child);
+          }
+        };
+        visit(node);
+        return out;
+      },
+    };
+    for (const child of children) {
+      child.parentElement = node;
+      node.children.push(child);
+    }
+    return node;
+  }
+
+  function indexTreeEl(root: TreeEl) {
+    let i = 0;
+    const visit = (n: TreeEl) => {
+      n.order = i++;
+      for (const child of n.children) visit(child);
+    };
+    visit(root);
+  }
+
+  it("derives rows from the DOM for a scope with synthesizeRows", () => {
+    const { navigator, scopes } = createHarness();
+    // two flat buttons on the root: one synthetic row holding both
+    const b1 = treeNode({ control: true });
+    const b2 = treeNode({ control: true });
+    const root = treeNode({}, [b1, b2]);
+    indexTreeEl(root);
+    scopes.push({
+      wmId: 1,
+      canNavigate: () => true,
+      root: () => root as unknown as HTMLElement,
+      requestClose: () => false,
+      synthesizeRows: true,
+    });
+
+    navigator.dispatch({ kind: "move", axis: "row", delta: 1 });
+
+    expect(root.classes.has("gp-focused-row")).toBe(true);
+    expect(b1.classes.has("focused-gamepad")).toBe(true);
+  });
+
+  it("prefers marked rows over synthesis for the same scope", () => {
+    const { navigator, scopes } = createHarness();
+    const markedButton = treeNode({ control: true });
+    const marked = treeNode({ row: true }, [markedButton]);
+    const stray = treeNode({ control: true });
+    const root = treeNode({}, [marked, stray]);
+    indexTreeEl(root);
+    scopes.push({
+      wmId: 1,
+      canNavigate: () => true,
+      root: () => root as unknown as HTMLElement,
+      requestClose: () => false,
+      synthesizeRows: true,
+    });
+
+    navigator.dispatch({ kind: "move", axis: "row", delta: 1 });
+
+    expect(marked.classes.has("gp-focused-row")).toBe(true);
+    expect(markedButton.classes.has("focused-gamepad")).toBe(true);
+    expect(stray.classes.has("focused-gamepad")).toBe(false);
   });
 }
