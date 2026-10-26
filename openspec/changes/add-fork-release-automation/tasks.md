@@ -21,7 +21,8 @@
 
 - [x] 4.1 Repo checks: `cd renderer && npm run lint && npm run check-types && npm run test` and `cd main && npm run lint && npm run check-types` — all green.
 - [x] 4.2 Packaging smoke test on Linux (validates the `extends` config and the update feed, publishes nothing): `cd main && npm run package "--" --config electron-builder.fork.yml -p onTag` (no tag → publish skipped, no token needed; first run may download electron-builder tooling), then inspect the generated `app-update.yml` in the packaged output (`dist/linux-unpacked/resources/`) and confirm it references owner `ys-kalyakin` / repo `Exiled-Exchange-2` and `releaseType: draft`. If `extends` misbehaves, apply the documented fallback (inline publish object via `-c.publish=…`, design D2) and re-run this check.
-- [ ] 4.3 Live pipeline check after merging to `master`: trigger `release.yml` via manual dispatch and confirm a green run with downloadable Windows + Linux artifacts and no release created; then (optional, next release) push a real `v*` tag and confirm a draft release with installers + `latest.yml` / `latest-linux.yml` that stays unpublished.
+- [x] 4.3 Live pipeline check after merging to `master`: trigger `release.yml` via manual dispatch and confirm a green run with downloadable Windows + Linux artifacts and no release created; then (optional, next release) push a real `v*` tag and confirm a draft release with installers + `latest.yml` / `latest-linux.yml` that stays unpublished.
+  - Note (2026-10-27): validated live via the real tag `v0.16.3` instead of an interim dispatch run — run 40401174186: renderer + `package (windows-2025)` + `package (ubuntu-22.04)` all green, tag-version guard passed, draft release created. The dispatch-only (artifacts, no release) path was skipped as redundant; exercise it anytime via "Run workflow" to confirm it too.
 
 ## 5. Repo settings (manual, no file edits)
 
