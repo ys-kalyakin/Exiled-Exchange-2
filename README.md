@@ -1,19 +1,36 @@
 # ![Perfect Jewelers Orb](./renderer/public/images/jeweler.png) Exiled Exchange 2
 
-[![GitHub Downloads (specific asset, latest release)](https://img.shields.io/github/downloads/kvan7/exiled-exchange-2/latest/Exiled-Exchange-2-Setup-0.16.3.exe?style=plastic&link=https%3A%2F%2Ftooomm.github.io%2Fgithub-release-stats%2F%3Fusername%3Dkvan7%26repository%3DExiled-Exchange-2)](https://tooomm.github.io/github-release-stats/?username=kvan7&repository=Exiled-Exchange-2)
-[![GitHub Tag](https://img.shields.io/github/v/tag/kvan7/exiled-exchange-2?style=plastic&label=latest%20version)](https://github.com/Kvan7/Exiled-Exchange-2/releases/latest)
-[![GitHub commits since latest release (branch)](https://img.shields.io/github/commits-since/kvan7/exiled-exchange-2/latest/dev?style=plastic)](https://github.com/Kvan7/Exiled-Exchange-2/commits/dev/)
-[![Translation status](https://translate.codeberg.org/widget/exiled-exchange-2/svg-badge.svg)](https://translate.codeberg.org/engage/exiled-exchange-2/)
+[![GitHub Tag](https://img.shields.io/github/v/tag/ys-kalyakin/exiled-exchange-2?style=plastic&label=latest%20version)](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases/latest)
+[![GitHub Downloads](https://img.shields.io/github/downloads/ys-kalyakin/exiled-exchange-2/total?style=plastic)](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases)
 
 Path of Exile 2 overlay program for price checking items, among many other loved features.
 
-Fork of [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade).
+This is a fork of [Kvan7/Exiled-Exchange-2](https://github.com/Kvan7/Exiled-Exchange-2), which is itself a fork of [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade).
 
-The ONLY official download sites are <https://kvan7.github.io/Exiled-Exchange-2/download> or <https://github.com/Kvan7/Exiled-Exchange-2/releases>, any other locations are not official and may be malicious.
+## What this fork changes
+
+- **Gamepad support.** Price check with `R3 + RT`, locked price check with `L3 + RT`, and the gamepad B button toggles the overlay. Overlay windows can be driven with the gamepad (d-pad navigation, auto-repeat, popover handling), and the settings UI includes gamepad configuration. The 8BitDo Pro 2 profile is included.
+- **Native KDE Plasma 6 Wayland overlay.** On KDE Wayland sessions the overlay runs through a KWin script bridge instead of XWayland, with game window tracking, overlay positioning and global shortcuts handled through KWin. X11 sessions are unaffected.
+- **Linux builds.** Releases include a Linux AppImage with automatic updates alongside the Windows installer and portable builds.
+- **Tag-driven releases.** Pushing a `v*` tag builds and publishes Windows and Linux artifacts with auto-update feeds on this repository's [Releases](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases) page.
+
+Windows remains the primary platform. macOS builds are not provided by this fork.
+
+See [docs/gamepad-roadmap.md](./docs/gamepad-roadmap.md) for the gamepad support status and plans, and [DEVELOPING.md](./DEVELOPING.md) for development documentation.
+
+## Download
+
+Grab the latest release from [GitHub Releases](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases/latest). As of v0.16.3, a release includes:
+
+- `Exiled-Exchange-2-Setup-0.16.3.exe` — Windows 10+ installer, with automatic updates
+- `Exiled-Exchange-2-0.16.3.exe` — Windows 10+ portable, no automatic updates
+- `Exiled-Exchange-2-0.16.3.AppImage` — Linux, with automatic updates (`latest.yml` / `latest-linux.yml` update feeds are published alongside)
+
+The app is unsigned, so you will have to bypass Windows security warnings to run it.
 
 ## Moving from POE1/Awakened PoE Trade
 
-1. Download latest release from [releases](https://github.com/Kvan7/exiled-exchange-2/releases)
+1. Download latest release from [releases](https://github.com/ys-kalyakin/exiled-exchange-2/releases)
 2. Run installer
 3. Run Exiled Exchange 2
 4. Launch PoE2 to generate correct files
@@ -41,10 +58,9 @@ See [DEVELOPING.md](./DEVELOPING.md)
 
 ### Acknowledgments
 
+- [Exiled Exchange 2](https://github.com/Kvan7/Exiled-Exchange-2) — the upstream project this fork is based on
 - [awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade)
 - [libuiohook](https://github.com/kwhat/libuiohook)
 - [RePoE](https://github.com/brather1ng/RePoE)
 - [poeprices.info](https://www.poeprices.info/)
 - [poe.ninja](https://poe.ninja/)
-
-![graph](https://i.imgur.com/MATqhv7.png)
