@@ -32,11 +32,11 @@ See [DEVELOPING.md](./DEVELOPING.md) for development documentation.
 
 ## Download
 
-Grab the latest release from [GitHub Releases](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases/latest). As of v0.16.3, a release includes:
+Grab the latest release from [GitHub Releases](https://github.com/ys-kalyakin/Exiled-Exchange-2/releases/latest). As of v0.16.4, a release includes:
 
-- `Exiled-Exchange-2-Setup-0.16.3.exe` — Windows 10+ installer, with automatic updates
-- `Exiled-Exchange-2-0.16.3.exe` — Windows 10+ portable, no automatic updates
-- `Exiled-Exchange-2-0.16.3.AppImage` — Linux, with automatic updates (`latest.yml` / `latest-linux.yml` update feeds are published alongside)
+- `Exiled-Exchange-2-Setup-0.16.4.exe` — Windows 10+ installer, with automatic updates
+- `Exiled-Exchange-2-0.16.4.exe` — Windows 10+ portable, no automatic updates
+- `Exiled-Exchange-2-0.16.4.AppImage` — Linux, with automatic updates (`latest.yml` / `latest-linux.yml` update feeds are published alongside)
 
 The app is unsigned, so you will have to bypass Windows security warnings to run it.
 
