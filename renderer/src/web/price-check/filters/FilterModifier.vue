@@ -1,5 +1,5 @@
 <template>
-  <div :class="$style['filter']">
+  <div :class="[$style['filter'], { [$style['disabled']]: isDisabled }]">
     <div v-if="showSourceInfo" :class="$style['mods']">
       <div class="pl-5 py-1" v-for="(source, idx) of filter.sources" :key="idx">
         <source-info :source="source" :filter="filter" />
@@ -12,13 +12,10 @@
           @click="toggleFilter"
           type="button"
         >
-          <i
-            class="w-5"
-            :class="{
-              'far fa-square text-gray-500': isDisabled,
-              'fas fa-check-square': !isDisabled,
-            }"
-          ></i>
+          <span
+            class="w-5 shrink-0"
+            :class="[$style['cbox'], { [$style['checked']]: !isDisabled }]"
+          ></span>
           <div
             class="search-text flex-1 mr-1 relative flex min-w-0"
             style="line-height: 1rem"
@@ -51,7 +48,8 @@
           <div v-if="showQ20Notice" :class="$style['qualityLabel']">
             {{ t("item.prop_quality", [calcQuality]) }}
           </div>
-          <div class="flex gap-x-px">
+          <!-- threshold editor is revealed on enabled rows only -->
+          <div v-if="showInputs && !isDisabled" class="flex gap-x-px">
             <input
               :class="$style['rollInput']"
               :placeholder="t('min')"
@@ -59,7 +57,6 @@
               :max="roll?.bounds?.max"
               :step="changeStep"
               type="number"
-              v-if="showInputs"
               ref="inputMinEl"
               v-model.number="inputMin"
               @focus="inputFocus($event, 'min')"
@@ -73,7 +70,6 @@
               :max="roll?.bounds?.max"
               :step="changeStep"
               type="number"
-              v-if="showInputs"
               ref="inputMaxEl"
               v-model.number="inputMax"
               @focus="inputFocus($event, 'max')"
@@ -81,6 +77,14 @@
               @mousewheel.stop
             />
           </div>
+          <!-- disabled row: natural roll range instead of threshold inputs -->
+          <span
+            v-if="isDisabled && roll?.bounds"
+            class="tnum"
+            :class="$style['naturalRange']"
+          >
+            {{ roll.bounds.min }}&ndash;{{ roll.bounds.max }}
+          </span>
         </div>
       </div>
       <div class="flex">
@@ -114,7 +118,11 @@
                 filter.sources.length > 1 ? ` x ${filter.sources.length}` : null
               }}</span
             >
-            <filter-modifier-tiers :filter="filter" :item="item" />
+            <filter-modifier-tiers
+              v-if="!isDisabled"
+              :filter="filter"
+              :item="item"
+            />
             <filter-modifier-item-has-empty
               :filter="filter"
               v-if="tradeId === 'item.has_empty_modifier'"
@@ -127,7 +135,7 @@
         </div>
 
         <stat-roll-slider
-          v-if="roll && roll.bounds"
+          v-if="!isDisabled && roll && roll.bounds"
           class="mr-4"
           style="width: 12.5rem"
           v-model="sliderValue"
@@ -401,14 +409,71 @@ export default defineComponent({
 <style lang="postcss" module>
 .filter {
   @apply py-2;
-  @apply border-b border-gray-700;
+  @apply border-b border-[color:var(--ee-separator)];
   display: flex;
   position: relative;
+
+  &.disabled {
+    @apply opacity-60;
+  }
+  &:hover.disabled {
+    @apply opacity-80;
+  }
+}
+
+/* drawn checkbox (same visual language as ui/UiCheckbox.vue); occupies the
+   same w-5 slot and baseline geometry the old glyph had */
+.cbox {
+  position: relative;
+  display: inline-block;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0 auto;
+    border: 1px solid var(--ee-border-strong);
+    border-radius: 2px;
+    background: var(--ee-surface-sunk);
+  }
+
+  &.checked::before {
+    border-color: var(--ee-accent);
+    background: var(--ee-accent);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.15rem;
+    margin: auto;
+    width: 0.325rem;
+    height: 0.55rem;
+    border-right: 0.125rem solid #14171d;
+    border-bottom: 0.125rem solid #14171d;
+    opacity: 0;
+    transform: rotate(45deg) scale(0.4);
+    transition:
+      transform var(--ee-dur-1) var(--ee-ease),
+      opacity var(--ee-dur-1) var(--ee-ease);
+  }
+
+  &.checked::after {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+}
+
+.naturalRange {
+  @apply text-xs text-[color:var(--ee-text-3)];
 }
 
 .rollInput {
-  @apply bg-gray-900;
-  @apply text-gray-300;
+  @apply bg-[color:var(--ee-surface-sunk)];
+  @apply text-[color:var(--ee-text-2)];
   @apply text-center;
   @apply w-12;
   @apply px-1;
@@ -422,34 +487,34 @@ export default defineComponent({
   }
 
   &::placeholder {
-    @apply text-gray-700;
+    @apply text-[color:var(--ee-text-3)];
     font-size: 0.8125rem;
   }
 
   /* &:not(:placeholder-shown) { @apply border-gray-600; } */
 
   &:focus {
-    @apply border-gray-500;
+    @apply border-[color:var(--ee-border-strong)];
     cursor: none;
   }
 }
 
 .qualityLabel {
-  @apply text-gray-500;
-  @apply border border-gray-700;
+  @apply text-[color:var(--ee-text-3)];
+  @apply border border-[color:var(--ee-border)];
   @apply rounded;
   @apply px-2;
   @apply text-center;
 }
 
 .mods {
-  @apply border-b-4 border-gray-500;
+  @apply -mx-4 px-4;
+  border-top: 2px solid var(--ee-border);
   background: linear-gradient(
     to bottom,
-    theme("colors.gray.800"),
-    theme("colors.gray.900")
+    var(--ee-surface),
+    var(--ee-surface-sunk)
   );
-  @apply -mx-4 px-4;
   position: absolute;
   top: 100%;
   left: 0;

@@ -1,0 +1,74 @@
+/*
+ * Overlay theme tokens ("game-native" skin).
+ * Single source of truth for surfaces, accent, borders, state layers,
+ * focus, shadows, motion and text ramp. Consumed by shared primitives
+ * and widget chrome. Plain rgba translucency only — the overlay is an
+ * Electron transparent window, so `backdrop-filter` would blur nothing
+ * behind it while still costing GPU during gameplay.
+ */
+
+:root {
+  /* surfaces */
+  --ee-surface: rgba(16, 18, 24, 0.92); /* widget body */
+  --ee-surface-raised: rgba(24, 27, 34, 0.97); /* titlebars, popovers, pills */
+  --ee-surface-overlay: rgba(
+    10,
+    12,
+    16,
+    0.98
+  ); /* exclusive windows: settings, help, price-check */
+  --ee-surface-sunk: rgba(8, 10, 14, 0.85); /* inputs, listings, <pre> */
+
+  /* hairline borders */
+  --ee-border: rgba(255, 255, 255, 0.07);
+  --ee-border-strong: rgba(255, 255, 255, 0.14);
+  --ee-separator: rgba(255, 255, 255, 0.05);
+
+  /* gold accent */
+  --ee-accent: #c9a761;
+  --ee-accent-strong: #dfc084;
+  --ee-accent-dim: rgba(201, 167, 97, 0.16);
+
+  /* state layers */
+  --ee-hover: rgba(255, 255, 255, 0.06);
+  --ee-active: rgba(255, 255, 255, 0.12);
+  --ee-focus: var(--ee-accent);
+
+  /* elevation */
+  --ee-shadow-1: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --ee-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.55);
+
+  /* motion — transform/opacity only, durations shrink to 0 under reduced motion */
+  --ee-dur-1: 80ms;
+  --ee-dur-2: 140ms;
+  --ee-dur-3: 220ms;
+  --ee-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* text ramp */
+  --ee-text-1: #e4e8ee;
+  --ee-text-2: #9aa3b2;
+  --ee-text-3: #667082;
+}
+
+/* Reduced motion: themed transitions apply their end state instantly. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ee-dur-1: 0ms;
+    --ee-dur-2: 0ms;
+    --ee-dur-3: 0ms;
+  }
+}
+
+/*
+ * Tabular numerals for aligned numeric readouts (prices, counts).
+ * Fontin lacks tabular figures, so digits fall back to the system sans.
+ */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}

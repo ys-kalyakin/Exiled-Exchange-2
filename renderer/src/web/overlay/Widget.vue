@@ -1,7 +1,10 @@
 <template>
   <div @mousedown="handleMouseDown">
     <div
-      :class="[$style.widget, { 'opacity-75': isMoving }]"
+      :class="[
+        $style.widget,
+        { 'opacity-75': isMoving, [$style.editOutline]: isMoving },
+      ]"
       :style="widgetPosition"
     >
       <slot :isEditing="isEditing" :isMoving="isMoving" />
@@ -11,22 +14,29 @@
         style="background: rgba(0, 0, 0, 0.01)"
       >
         <div :class="$style.actionsPanel">
-          <button v-if="hideable" @click="hide" :class="$style.action">
-            {{ t("widget.hide") }}
+          <button
+            v-if="hideable"
+            @click="hide"
+            :class="$style.action"
+            :title="t('widget.hide')"
+          >
+            <i class="fas fa-eye-slash"></i>
           </button>
           <button
             v-if="!readonly"
             @click="toggleEdit"
             :class="[$style.action, { [$style.active]: isEditing }]"
+            :title="t('widget.edit')"
           >
-            {{ t("widget.edit") }}
+            <i class="fas fa-pen"></i>
           </button>
           <button
             v-if="moveHandles !== 'none'"
             @click="toggleMove"
             :class="[$style.action, { [$style.active]: isMoving }]"
+            :title="t('widget.move')"
           >
-            {{ t("widget.move") }}
+            <i class="fas fa-arrows-alt"></i>
           </button>
           <button
             v-if="removable"
@@ -38,8 +48,9 @@
               $style.removable,
               { [$style.removing]: isRemoving },
             ]"
+            :title="t('widget.delete')"
           >
-            {{ t("widget.delete") }}
+            <i class="fas fa-trash-alt"></i>
           </button>
         </div>
       </div>
@@ -355,38 +366,49 @@ export default defineComponent({
 }
 
 .actionsPanel {
-  @apply py-1;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.4);
   display: flex;
-  flex-direction: column;
-  @apply rounded;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--ee-surface-raised);
+  border: 1px solid var(--ee-border-strong);
+  border-radius: 2px;
+  box-shadow: var(--ee-shadow-1);
 }
 
 .action {
-  @apply px-1;
-  text-align: left;
-  white-space: nowrap;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ee-text-2);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--ee-hover);
+    color: var(--ee-text-1);
   }
 
   &.active {
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--ee-accent-dim);
+    color: var(--ee-accent);
   }
 
   &.removable {
+    /* hold-to-delete progress: fill sweeps right→left over ~1s (background-position), cancel on early release */
     background: linear-gradient(
       to left,
       transparent 50%,
-      theme("colors.red.600") 50%
+      rgba(229, 87, 87, 0.35) 50%
     );
     background-size: 250% 100%;
     background-position: right bottom;
+    &:hover {
+      color: #ff8080;
+    }
   }
 
   &.removing {
+    color: #ff8080;
     background-size: 200% 100%;
     transition: background-position 1s ease-out;
     background-position: left bottom;
@@ -399,27 +421,42 @@ export default defineComponent({
   /* left: max(0%, min(calc(x% - (1rem/2)), calc(100% - 1rem))); */
   width: 1rem;
   height: 1rem;
-  border: 0.25rem solid rgba(0, 0, 0, 0.6);
-  background: rgba(0, 0, 0, 0.2);
   cursor: move;
   user-select: none;
 
+  /* corner dot drawn inside the 1rem hit area */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: var(--ee-accent);
+  }
+
   &.active {
     position: fixed;
-    border-color: #fff;
-    box-shadow:
-      0 1px 3px 0 rgb(0, 0, 0),
-      0 1px 2px 0 rgb(0, 0, 0);
+
+    &::before {
+      background: var(--ee-accent-strong);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0);
+    }
   }
+}
+
+/* dashed accent outline while anchoring / moving */
+.editOutline {
+  outline: 1px dashed var(--ee-accent);
+  outline-offset: 2px;
 }
 </style>
 
 <style lang="postcss">
 .widget-default-style {
   @apply rounded;
-  @apply bg-gray-900;
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.75),
-    0 1px 2px 0 rgba(0, 0, 0, 0.75);
+  background: var(--ee-surface);
+  box-shadow: var(--ee-shadow-1);
 }
 </style>

@@ -1,33 +1,47 @@
 <template>
-  <div :class="[$style.btn, { [$style.active]: !filter.disabled }]">
+  <div :class="[$style.btn, { [$style.dimmed]: filter.disabled }]">
     <button @click="filter.disabled = !filter.disabled" class="pl-2">
-      {{ name }}
+      <span :class="[$style.cbox, { [$style.checked]: !filter.disabled }]">
+        <span :class="$style.check" />
+      </span>
+      <span>{{ name }}</span>
     </button>
-    <input
-      :class="$style.input"
-      step="any"
-      type="number"
-      v-model.number="inputMin"
-      @focus="inputFocus"
-      @mousedown.right.prevent="clearInput($event, 'min')"
-      @blur="inputMinBlur"
-      @mousewheel.stop
-      :style="{ width: `${1.2 + Math.max(String(inputMin).length, 2)}ch` }"
-    />
-    <template v-if="'max' in filter">
-      <span>–</span>
+    <!-- threshold editor is revealed on enabled rows only -->
+    <template v-if="!filter.disabled">
       <input
         :class="$style.input"
         step="any"
         type="number"
-        v-model.number="inputMax"
+        v-model.number="inputMin"
         @focus="inputFocus"
-        @mousedown.right.prevent="clearInput($event, 'max')"
+        @mousedown.right.prevent="clearInput($event, 'min')"
+        @blur="inputMinBlur"
         @mousewheel.stop
-        :style="{ width: `${1.2 + Math.max(String(inputMax).length, 2)}ch` }"
-        placeholder="…"
+        :style="{ width: `${1.2 + Math.max(String(inputMin).length, 2)}ch` }"
       />
+      <template v-if="'max' in filter">
+        <span>–</span>
+        <input
+          :class="$style.input"
+          step="any"
+          type="number"
+          v-model.number="inputMax"
+          @focus="inputFocus"
+          @mousedown.right.prevent="clearInput($event, 'max')"
+          @mousewheel.stop
+          :style="{ width: `${1.2 + Math.max(String(inputMax).length, 2)}ch` }"
+          placeholder="…"
+        />
+      </template>
     </template>
+    <!-- disabled row: the item's natural value instead of a threshold input -->
+    <span v-else class="tnum" :class="$style.value">
+      {{
+        "max" in filter && filter.max != null
+          ? `${filter.value}–${filter.max}`
+          : filter.value
+      }}
+    </span>
   </div>
 </template>
 
@@ -125,31 +139,76 @@ export default defineComponent({
 </script>
 
 <style lang="postcss" module>
+/* checkbox row (same visual language as ui/UiCheckbox.vue) */
 .btn {
-  @apply bg-gray-900 rounded;
-  @apply border border-transparent;
-  @apply pr-1;
   line-height: 1.25rem;
+  display: flex;
+  align-items: center;
 
-  &.active {
-    @apply border-gray-500;
+  &.dimmed {
+    @apply opacity-60;
   }
+}
+
+.btn button {
+  display: flex;
+  align-items: center;
+  @apply gap-x-1;
+}
+
+.cbox {
+  position: relative;
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1px solid var(--ee-border-strong);
+  border-radius: 2px;
+  background: var(--ee-surface-sunk);
+
+  &.checked {
+    border-color: var(--ee-accent);
+    background: var(--ee-accent);
+  }
+}
+
+.check {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.325rem;
+  height: 0.55rem;
+  border-right: 0.125rem solid #14171d;
+  border-bottom: 0.125rem solid #14171d;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.4);
+  transition:
+    transform var(--ee-dur-1) var(--ee-ease),
+    opacity var(--ee-dur-1) var(--ee-ease);
+}
+
+.checked .check {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.value {
+  @apply text-[color:var(--ee-text-3)];
 }
 
 .input {
   @apply text-center;
   @apply bg-transparent;
-  @apply text-gray-300;
+  @apply text-[color:var(--ee-text-2)];
   @apply select-all;
 
   &:hover,
   &:focus {
-    @apply bg-gray-700;
-    @apply -my-px border-t border-b border-gray-500;
+    @apply bg-[color:var(--ee-surface-sunk)];
+    @apply -my-px border-t border-b border-[color:var(--ee-border-strong)];
   }
 
   &::placeholder {
-    @apply text-gray-400;
+    @apply text-[color:var(--ee-text-3)];
   }
 
   &:focus {

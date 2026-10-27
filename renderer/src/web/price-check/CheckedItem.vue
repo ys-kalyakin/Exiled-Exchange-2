@@ -34,7 +34,11 @@
       data-gp-section
     >
       <div class="flex w-40" @mouseenter="handleSearchMouseenter">
-        <button class="btn" @click="doSearch = true" style="min-width: 5rem">
+        <button
+          class="btn primary"
+          @click="doSearch = true"
+          style="min-width: 5rem"
+        >
           {{ t("Search") }}
         </button>
       </div>

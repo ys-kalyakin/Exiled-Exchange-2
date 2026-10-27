@@ -437,14 +437,15 @@ export default defineComponent({
 </script>
 
 <style lang="postcss">
-/* gamepad navigation focus indicator (renderer/src/web/overlay/gamepad/) */
+/* gamepad navigation focus indicator (renderer/src/web/overlay/gamepad/)
+   same accent as keyboard :focus-visible ring (--ee-focus) */
 .focused-gamepad {
-  outline: 2px solid #f59e0b;
+  outline: 2px solid var(--ee-focus);
   outline-offset: 1px;
   border-radius: 2px;
 }
 
 .gp-focused-row {
-  background: rgb(255 255 255 / 0.07);
+  background: var(--ee-hover);
 }
 </style>

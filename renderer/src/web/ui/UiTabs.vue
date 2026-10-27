@@ -1,17 +1,11 @@
 <template>
   <div>
-    <div class="flex mb-1 gap-px">
+    <div :class="$style['tabbar']">
       <button
-        v-for="(tab, index) in tabs"
+        v-for="tab in tabs"
         :key="tab"
         @click="updateTab(tab)"
-        class="px-2 py-1 text-gray-400 leading-none"
-        :class="{
-          'bg-gray-900': modelValue === tab,
-          'bg-gray-700': modelValue !== tab,
-          'rounded-l': index === 0,
-          'rounded-r': index === tabs.length - 1,
-        }"
+        :class="[$style['tab'], { [$style['active']]: modelValue === tab }]"
       >
         {{ tab }}
       </button>
@@ -47,4 +41,32 @@ export default defineComponent({
 });
 </script>
 
-<style lang="postcss" module></style>
+<style lang="postcss" module>
+.tabbar {
+  display: flex;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ee-border);
+}
+
+.tab {
+  position: relative;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  color: var(--ee-text-2);
+}
+
+.tab:hover,
+.tab.active {
+  color: var(--ee-text-1);
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: -1px;
+  height: 2px;
+  background: var(--ee-accent);
+}
+</style>

@@ -499,20 +499,20 @@ export default defineComponent({
 
 <style lang="postcss" module>
 .presetBtn {
-  @apply border-gray-700 bg-gray-800;
+  @apply border-b border-[color:var(--ee-separator)];
+  background: var(--ee-surface-sunk);
+  color: var(--ee-text-2);
   @apply px-2;
   min-width: 3rem;
 
   &:hover {
-    @apply bg-gray-700;
+    background: var(--ee-surface);
+    color: var(--ee-text-1);
   }
 
   &.active {
-    background: linear-gradient(
-      to bottom,
-      theme("colors.gray.900"),
-      theme("colors.gray.800")
-    );
+    background: var(--ee-surface-raised);
+    color: var(--ee-accent);
   }
 }
 </style>

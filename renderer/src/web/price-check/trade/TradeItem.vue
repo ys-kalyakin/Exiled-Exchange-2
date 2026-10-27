@@ -5,46 +5,55 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <td class="px-2 whitespace-nowrap">
-      <span
-        :class="{
-          'line-through': false,
-        }"
-        >{{ result.priceAmount }} {{ result.priceCurrency
-        }}{{
-          result.normalizedPriceCurrency &&
-          result.priceCurrency !== result.normalizedPriceCurrency.id &&
-          result.priceCurrency !== "divine" &&
-          result.normalizedPrice
-            ? ` (${result.normalizedPrice} ${result.normalizedPriceCurrency.abbrev})`
-            : ""
-        }}</span
-      >
-      <span
-        v-if="result.listedTimes > 2"
-        class="rounded px-1 text-gray-800 bg-gray-400 -mr-2"
-        ><span class="font-sans">×</span> {{ result.listedTimes }}</span
-      ><i v-else-if="!result.hasNote" class="fas fa-question" />
+    <td class="px-2 whitespace-nowrap text-right tnum">
+      <div class="flex items-center justify-between">
+        <!-- fixed slot keeps the icons of all rows on one vertical line;
+             currencies without reserved art leave the slot empty -->
+        <span class="w-5 h-5 shrink-0">
+          <img v-if="currencyIcon" :src="currencyIcon" class="w-5 h-5" />
+        </span>
+        <span>
+          <span
+            :class="{
+              'line-through': false,
+            }"
+            >{{ result.priceAmount }} {{ result.priceCurrency
+            }}{{
+              result.normalizedPriceCurrency &&
+              result.priceCurrency !== result.normalizedPriceCurrency.id &&
+              result.priceCurrency !== "divine" &&
+              result.normalizedPrice
+                ? ` (${result.normalizedPrice} ${result.normalizedPriceCurrency.abbrev})`
+                : ""
+            }}</span
+          >
+          <span
+            v-if="result.listedTimes > 2"
+            class="rounded px-1 text-gray-800 bg-gray-400 -mr-2"
+            ><span class="font-sans">×</span> {{ result.listedTimes }}</span
+          ><i v-else-if="!result.hasNote" class="fas fa-question" />
+        </span>
+      </div>
     </td>
-    <td v-if="item.stackSize" class="px-2 text-right">
+    <td v-if="item.stackSize" class="px-2 text-right tnum">
       {{ result.stackSize }}
     </td>
 
-    <td v-if="itemLevel" class="px-2 whitespace-nowrap text-right">
+    <td v-if="itemLevel" class="px-2 whitespace-nowrap text-right tnum">
       {{ result.itemLevel }}
     </td>
     <td
       v-if="isGem || item.category === ItemCategory.UncutGem"
-      class="pl-2 whitespace-nowrap"
+      class="pl-2 whitespace-nowrap tnum"
     >
       {{ result.level }}
     </td>
-    <td v-if="isGem || grantsSkill" class="pl-2 whitespace-nowrap">
+    <td v-if="isGem || grantsSkill" class="pl-2 whitespace-nowrap tnum">
       {{ result.gemSockets }}
     </td>
     <td
       v-if="(quality && !quality.disabled) || isGem"
-      class="px-2 whitespace-nowrap text-blue-400 text-right"
+      class="px-2 whitespace-nowrap text-blue-400 text-right tnum"
     >
       {{ result.quality }}
     </td>
@@ -215,12 +224,28 @@ export default defineComponent({
 
       instance?.destroy();
     });
+    // price cell icon art; ids come from the trade API and may carry a
+    // "G. "/"P. " (greater/perfect) prefix — match on the base orb name.
+    // Currencies without reserved art return undefined and keep the slot empty.
+    const currencyIcon = computed(() => {
+      const id = props.result.priceCurrency.toLowerCase();
+      if (id.includes("divine") || id === "div") return "/images/divine.png";
+      if (id.includes("chaos")) return "/images/chaos.png";
+      if (id.includes("exalted")) return "/images/exa.png";
+      if (id.includes("annul")) return "/images/annul.png";
+      if (id.includes("regal")) return "/images/regal.png";
+      if (id.includes("transmute")) return "/images/transmute.png";
+      if (id.includes("aug")) return "/images/aug.png";
+      return undefined;
+    });
+
     return {
       t,
       target,
       content,
       isHovered,
       isShiftPressed,
+      currencyIcon,
       ItemCategory,
       isGem: computed(
         () => props.item.category && GEM.has(props.item.category),

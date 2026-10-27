@@ -112,6 +112,42 @@ export default defineComponent({
 <style lang="postcss">
 .tippy-box[data-theme~="light"] {
   @apply rounded;
+  color: var(--ee-text-1);
+  background: var(--ee-surface-raised);
+  border: 1px solid var(--ee-border-strong);
+  box-shadow: var(--ee-shadow-2);
+}
+
+.tippy-box[data-theme~="light"][data-placement^="top"] > .tippy-arrow:before {
+  border-top-color: var(--ee-surface-raised);
+}
+
+.tippy-box[data-theme~="light"][data-placement^="bottom"]
+  > .tippy-arrow:before {
+  border-bottom-color: var(--ee-surface-raised);
+}
+
+.tippy-box[data-theme~="light"][data-placement^="left"] > .tippy-arrow:before {
+  border-left-color: var(--ee-surface-raised);
+}
+
+.tippy-box[data-theme~="light"][data-placement^="right"] > .tippy-arrow:before {
+  border-right-color: var(--ee-surface-raised);
+}
+
+/* entrance: fade + scale(0.98→1) on the content wrapper; popper owns the
+   positioning transform on the box itself, so this stays conflict-free */
+.tippy-box[data-theme~="light"] .tippy-content {
+  transform: scale(0.98);
+  opacity: 0;
+}
+
+.tippy-box[data-theme~="light"][data-state="visible"] .tippy-content {
+  transform: scale(1);
+  opacity: 1;
+  transition:
+    transform 120ms var(--ee-ease),
+    opacity 120ms var(--ee-ease);
 }
 
 .tippy-content {

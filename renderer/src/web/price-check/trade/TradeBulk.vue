@@ -96,20 +96,20 @@
               <td colspan="100" class="text-transparent">***</td>
             </tr>
             <tr v-else :key="result.id">
-              <td class="px-2">
+              <td class="px-2 text-right tnum">
                 {{
                   Number((result.exchangeAmount / result.itemAmount).toFixed(4))
                 }}
               </td>
-              <td class="pl-1 whitespace-nowrap">
+              <td class="pl-1 whitespace-nowrap tnum">
                 <span class="w-8 inline-block text-right">{{
                   result.exchangeAmount
                 }}</span
                 ><span>{{ "\u2009" }}/{{ "\u2009" }}</span
                 ><span class="w-8 inline-block">{{ result.itemAmount }}</span>
               </td>
-              <td class="px-1 text-right">{{ result.stock }}</td>
-              <td class="px-1 text-right">
+              <td class="px-1 text-right tnum">{{ result.stock }}</td>
+              <td class="px-1 text-right tnum">
                 <i
                   v-if="result.stock < result.itemAmount"
                   class="fas fa-exclamation-triangle mr-1 text-gray-500"

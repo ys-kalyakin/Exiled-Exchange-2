@@ -1,8 +1,9 @@
 <template>
   <button @click="updateInput" :class="$style['radio']">
     <template v-if="!useBgSelection">
-      <i v-if="!isChecked" class="far fa-circle"></i>
-      <i v-else class="fas fa-check-circle"></i>
+      <span :class="[$style['ring'], { [$style['checked']]: isChecked }]">
+        <span :class="$style['dot']" />
+      </span>
       <slot />
     </template>
     <template v-else>
@@ -55,7 +56,45 @@ export default defineComponent({
 .radio {
   display: flex;
   @apply gap-x-1;
-  align-items: baseline;
+  align-items: center;
   text-align: left;
+}
+
+.ring {
+  position: relative;
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1px solid var(--ee-border-strong);
+  border-radius: 50%;
+  background: var(--ee-surface-sunk);
+}
+
+.radio:hover .ring {
+  border-color: var(--ee-accent);
+}
+
+.ring.checked {
+  border-color: var(--ee-accent);
+}
+
+.dot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--ee-accent);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    transform var(--ee-dur-1) var(--ee-ease),
+    opacity var(--ee-dur-1) var(--ee-ease);
+}
+
+.ring.checked .dot {
+  opacity: 1;
+  transform: scale(1);
 }
 </style>

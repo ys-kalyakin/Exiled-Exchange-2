@@ -12,12 +12,21 @@ import OverlayWindow from "./overlay/OverlayWindow.vue";
 @import url("@fortawesome/fontawesome-free/css/all.min.css");
 @import url("animate.css/animate.css");
 @import url("../assets/font.css");
+@import url("../assets/theme.css");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.table-stripped tbody tr:nth-child(odd) {
-  background: #353f52;
+.table-stripped tbody tr {
+  border-bottom: 1px solid var(--ee-separator);
+}
+
+.table-stripped tbody tr:hover {
+  background: var(--ee-hover);
+}
+
+.table-stripped tbody tr:last-child {
+  border-bottom: none;
 }
 
 #app {
@@ -31,6 +40,12 @@ import OverlayWindow from "./overlay/OverlayWindow.vue";
   :focus {
     outline: 0;
   }
+
+  /* keyboard + gamepad focus share the accent ring (see .focused-gamepad) */
+  :focus-visible {
+    outline: 2px solid var(--ee-focus);
+    outline-offset: 1px;
+  }
 }
 
 .layout-column {
@@ -40,15 +55,17 @@ import OverlayWindow from "./overlay/OverlayWindow.vue";
 }
 
 ::-webkit-scrollbar {
-  width: 0.875rem;
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 ::-webkit-scrollbar-track {
-  -webkit-box-shadow: inset 0 0 0.375rem rgba(0, 0, 0, 0.3);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  -webkit-box-shadow: inset 0 0 0.375rem rgba(0, 0, 0, 0.5);
+  background: var(--ee-border-strong);
+  border-radius: 2px;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -62,6 +79,24 @@ input[type="number"]::-webkit-outer-spin-button {
   @apply text-gray-400;
   @apply leading-none;
   @apply rounded;
+}
+
+.btn.primary {
+  background: var(--ee-accent);
+  color: #14171d;
+}
+
+.btn.primary:hover {
+  background: var(--ee-accent-strong);
+}
+
+.btn.danger {
+  background: rgba(229, 87, 87, 0.15);
+  color: #ff8080;
+}
+
+.btn.danger:hover {
+  background: rgba(229, 87, 87, 0.25);
 }
 
 .btn-icon {
