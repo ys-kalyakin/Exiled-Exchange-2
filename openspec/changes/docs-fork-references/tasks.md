@@ -15,8 +15,8 @@
 
 ## 3. Deploy and live verification
 
-- [ ] 3.1 Push the change to `master` and trigger the `Docs` workflow via `workflow_dispatch`. Verify: run succeeds on GitHub Actions.
-- [ ] 3.2 Verify the live site serves the corrected content. Verify: `https://ys-kalyakin.github.io/Exiled-Exchange-2/faq` names the fork, the rendered header link and download links target fork URLs, and the README-on-`master` FAQ link opens this site.
+- [x] 3.1 Push the change to `master` and trigger the `Docs` workflow via `workflow_dispatch`. Verify: run succeeds on GitHub Actions. _Note: `workflow_dispatch` could not run (gh unauthenticated); the successful deploy run (f2b2e8f4) came from the workflow's push trigger — user-approved._
+- [x] 3.2 Verify the live site serves the corrected content. Verify: `https://ys-kalyakin.github.io/Exiled-Exchange-2/faq` names the fork, the rendered header link and download links target fork URLs, and the README-on-`master` FAQ link opens this site.
 
 ## Workflow follow-up
 
