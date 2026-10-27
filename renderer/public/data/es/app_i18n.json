@@ -60,7 +60,6 @@
     "stock": "Inventario: {0}",
     "map_tier": "Capa del mapa: {0}",
     "area_level": "Nivel del área: {0}",
-    "heist_wings_revealed": "Alas reveladas: {0}",
     "linked_sockets": "Enlaces: {0}",
     "white_sockets": "Blanco: {0}",
     "quality": "Calidad: {0}",
@@ -152,12 +151,6 @@
     "weapon_wand": "Varita",
     "weapon_warstaff": "Bastón de guerra",
     "jewel_cluster": "Joya de clúster",
-    "heistmission_blueprint": "Plano de Atraco",
-    "heistmission_contract": "Contrato de Atraco",
-    "heistequipment_heisttool": "Herramienta de Atraco",
-    "heistequipment_heistreward": "Broche de Atraco",
-    "heistequipment_heistweapon": "Equipo de Atraco",
-    "heistequipment_heistutility": "Capa de Atraco",
     "accessory_trinket": "Adorno",
     "sanctum_relic": "Reliquia del Sanctum",
     "tincture": "Tintura",
@@ -206,9 +199,7 @@
     "tag_explicit_hunter": "Cazador",
     "tag_explicit_redeemer": "Redentor",
     "tag_explicit_warlord": "Señor de la guerra",
-    "tag_explicit_delve": "Excursión",
     "tag_explicit_veiled": "Velado",
-    "tag_explicit_incursion": "Incursión",
     "tag_rune": "mejora",
     "tag_added_rune": "mejora",
     "tag_desecrated": "profanado",
@@ -288,15 +279,15 @@
     "name": "Franja de imagen"
   },
   "item_search": {
-    "name": "Búsqueda de objetos",
-    "input": "Buscar por nombre…",
-    "reset": "Reiniciar objetos",
     "heist_target": "Objetivo de robo:",
+    "input": "Buscar por nombre…",
+    "name": "Búsqueda de objetos",
+    "not_found": "No se encontraron objetos.",
+    "ocr_gems_key": "Realizar un OCR para una gema de habilidad",
+    "reset": "Reiniciar objetos",
     "target_gem": "Gema de habilidad",
     "target_replica": "Réplicas",
-    "too_many_": "Se encontraron demasiados objetos, introduce el nombre de manera más precisa.",
-    "not_found": "No se encontraron objetos.",
-    "ocr_gems_key": "Realizar un OCR para una gema de habilidad"
+    "too_many_": "Se encontraron demasiados objetos, introduce el nombre de manera más precisa."
   },
   "map_check": {
     "name": "Comprobación de mapa",
@@ -349,7 +340,6 @@
     "clear_hotkey": "Puedes borrar la tecla rápida presionando Retroceso",
     "overlay": "Superposición",
     "stash_scroll": "Desplazamiento de la pestaña del alijo",
-    "delve_grid": "Rejilla para el gráfico de la Excursión",
     "window_title": "Título de la ventana de PoE",
     "thank_you": "El desarrollo de la aplicación continúa gracias a:",
     "hotkeys": "Teclas rápidas",
@@ -432,7 +422,6 @@
     "parse_error3": "(Posiblemente un nuevo término o palabra modificada de poe1)",
     "bulk_exchange": "Las tasas de cambio a granel aún no están implementadas"
   },
-  "map.mods.heist": "robo",
   "Superior": "Avanzado",
   "notepad": {
     "name": "Bloc de notas",

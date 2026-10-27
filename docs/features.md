@@ -68,12 +68,6 @@ Save Regex's or specific strings to use to search in the stash. Also keybindable
 
 *Full Page: [Extra Widgets](/extra-widgets)*{:.text-sm}
 
-#### Image Strip (Cheat Sheets)
-
-![Image Strip](/reference-images/minCheatSheet.png)
-
-![Image Strip Synd](/reference-images/cheatSheetSynd.png)
-
 #### Stopwatch
 
 ![Stopwatch](/reference-images/Stopwatch.png)

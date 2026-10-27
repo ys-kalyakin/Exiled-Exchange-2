@@ -314,10 +314,8 @@ export default defineComponent({
     function handleItemPaste(e: { clipboard: string; item: ParsedItem }) {
       const newItem = (e.item ? ok(e.item) : parseClipboard(e.clipboard))
         .andThen((item) =>
-          (item.category === ItemCategory.HeistContract &&
-            item.rarity !== ItemRarity.Unique) ||
-          (item.category === ItemCategory.Sentinel &&
-            item.rarity !== ItemRarity.Unique)
+          item.category === ItemCategory.Sentinel &&
+          item.rarity !== ItemRarity.Unique
             ? err("item.unknown")
             : ok(item),
         )

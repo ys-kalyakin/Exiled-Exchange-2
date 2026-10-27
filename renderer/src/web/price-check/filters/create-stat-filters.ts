@@ -19,7 +19,6 @@ import {
   StatFilterRoll,
 } from "./interfaces";
 import { filterPseudo } from "./pseudo";
-import { applyRules as applyAtzoatlRules } from "./pseudo/atzoatl-rules";
 import { applyRules as applyMirroredTabletRules } from "./pseudo/reflection-rules";
 import { applyRules as applyMissingFracturedRules } from "./pseudo/missing-fractured-rules";
 import { filterItemProp, filterBasePercentile } from "./pseudo/item-property";
@@ -46,7 +45,7 @@ export function createExactStatFilters(
     searchInRange = 0;
   }
 
-  if (item.mapBlighted || item.category === ItemCategory.Invitation) return [];
+  if (item.category === ItemCategory.Invitation) return [];
   if (
     item.isUnidentified &&
     item.rarity === ItemRarity.Unique &&
@@ -88,8 +87,6 @@ export function createExactStatFilters(
         explicitModifierCount(item).total < 5)) &&
     item.category !== ItemCategory.ClusterJewel &&
     item.category !== ItemCategory.Map &&
-    item.category !== ItemCategory.HeistContract &&
-    item.category !== ItemCategory.HeistBlueprint &&
     item.category !== ItemCategory.Sentinel
   ) {
     keepByType.push(ModifierType.Explicit);
@@ -118,10 +115,6 @@ export function createExactStatFilters(
     ),
   );
 
-  if (item.info.refName === "Chronicle of Atzoatl") {
-    applyAtzoatlRules(ctx.filters);
-    return ctx.filters;
-  }
   if (item.info.refName === "Mirrored Tablet") {
     applyMirroredTabletRules(ctx.filters);
     return ctx.filters;
@@ -429,23 +422,11 @@ export function calculatedStatToFilter(
       }
     } else if (
       sources.some((s) =>
-        CLIENT_STRINGS.DELVE_MODS.includes(s.modifier.info.name!),
-      )
-    ) {
-      filter.tag = FilterTag.Delve;
-    } else if (
-      sources.some((s) =>
         CLIENT_STRINGS.VEILED_MODS.includes(s.modifier.info.name!),
       )
     ) {
       // can't drop from ground, so don't show
       // filter.tag = FilterTag.Unveiled
-    } else if (
-      sources.some((s) =>
-        CLIENT_STRINGS.INCURSION_MODS.includes(s.modifier.info.name!),
-      )
-    ) {
-      filter.tag = FilterTag.Incursion;
     }
   } else if (type === ModifierType.Enchant) {
     if (sources.some((s) => s.modifier.info.generation === "corrupted")) {

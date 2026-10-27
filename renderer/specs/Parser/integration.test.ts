@@ -82,3 +82,32 @@ describe("Parse Charm Properties", () => {
     expect(parsedItem.quality).toBe(CharmQuality.quality);
   });
 });
+
+describe("Parse PoE1-only Items", () => {
+  beforeEach(async () => {
+    setupTests();
+    await init("en");
+  });
+
+  // PoE1 item with no PoE2 data set entry; must not produce heist structured data
+  const HeistBlueprint = `Item Class: Heist Blueprint
+Rarity: Normal
+Elegant Blueprint
+--------
+Requirements:
+Level: 72
+--------
+Item Level: 81
+--------
+Area Level: 81
+--------
+Heist Target: Enchants
+--------
+Blueprint Wings: Revealed 1/4`;
+
+  it("does not recognize a heist blueprint as a price-checkable item", () => {
+    const item = parseClipboard(HeistBlueprint);
+
+    expect(item.isErr()).toBe(true);
+  });
+});

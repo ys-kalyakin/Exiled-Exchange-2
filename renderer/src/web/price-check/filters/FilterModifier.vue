@@ -204,7 +204,6 @@ export default defineComponent({
       () =>
         props.filter.tag !== FilterTag.Property &&
         props.filter.tradeId[0] !== "item.has_empty_modifier" &&
-        props.item.info.refName !== "Chronicle of Atzoatl" &&
         props.item.info.refName !== "Mirrored Tablet" &&
         props.item.info.refName !== "Filled Coffin" &&
         !(
@@ -549,9 +548,7 @@ export default defineComponent({
 .tag-explicit-hunter,
 .tag-explicit-redeemer,
 .tag-explicit-warlord,
-.tag-explicit-delve,
-.tag-explicit-veiled,
-.tag-explicit-incursion {
+.tag-explicit-veiled {
   display: flex;
   align-items: center;
   @apply -mx-1 pl-0.5 gap-x-0.5 text-gray-600;
@@ -581,14 +578,8 @@ export default defineComponent({
 .tag-explicit-warlord::before {
   background-image: url("/images/influence-Warlord.png");
 }
-.tag-explicit-delve::before {
-  background-image: url("/images/delve.png");
-}
 .tag-explicit-veiled::before {
   background-image: url("/images/veiled.png");
-}
-.tag-explicit-incursion::before {
-  background-image: url("/images/incursion.png");
 }
 
 .tag-corrupted {

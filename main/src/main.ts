@@ -153,7 +153,6 @@ let tray: AppTray;
               cfg.stashScroll,
               cfg.logKeys,
               cfg.restoreClipboard,
-              cfg.language,
             );
             shortcuts.updateDelay(cfg.initialDelay);
             gameLogWatcher.restart(cfg.clientLog ?? "", cfg.readClientLog);

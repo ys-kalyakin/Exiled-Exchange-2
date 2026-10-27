@@ -42,9 +42,7 @@ export function getDetailsId(item: ParsedItem) {
   if (item.category === ItemCategory.Map) {
     return {
       ns: item.info.namespace,
-      name: item.mapBlighted
-        ? `${item.mapBlighted} ${item.info.refName}`
-        : item.info.refName,
+      name: item.info.refName,
       variant: variant([
         `T${item.mapTier}`,
         item.rarity !== ItemRarity.Unique ? "Gen-18" : null,

@@ -115,12 +115,16 @@ describe("trade request rarity option", () => {
   it("omits the rarity option in off mode", () => {
     const body = buildBody(ItemRarity.Magic, "off");
 
-    expect(body.query.filters.type_filters?.filters.rarity?.option).toBeUndefined();
+    expect(
+      body.query.filters.type_filters?.filters.rarity?.option,
+    ).toBeUndefined();
   });
 
   it("omits the rarity option when the filter chip is toggled off", () => {
     const body = buildBody(ItemRarity.Magic, "match", true);
 
-    expect(body.query.filters.type_filters?.filters.rarity?.option).toBeUndefined();
+    expect(
+      body.query.filters.type_filters?.filters.rarity?.option,
+    ).toBeUndefined();
   });
 });

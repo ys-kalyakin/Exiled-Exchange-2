@@ -110,12 +110,6 @@ export function createFilters(
       baseType: item.info.name,
       baseTypeTrade: t(opts, item.info),
     };
-    if (item.info.refName === "Chronicle of Atzoatl") {
-      filters.areaLevel = {
-        value: floorToBracket(item.areaLevel!, [1, 68, 73, 75, 78, 80]),
-        disabled: false,
-      };
-    }
     if (
       item.info.refName === "Mirrored Tablet" ||
       item.info.refName === "Forbidden Tome"
@@ -153,46 +147,10 @@ export function createFilters(
       };
     }
 
-    if (item.mapBlighted) {
-      filters.mapBlighted = { value: item.mapBlighted };
-    }
-
     filters.mapTier = {
       value: item.mapTier!,
       disabled: false,
     };
-  } else if (item.info.refName === "Expedition Logbook") {
-    filters.searchExact = {
-      baseType: item.info.name,
-      baseTypeTrade: t(opts, item.info),
-    };
-    filters.areaLevel = {
-      // Seems like flooring area level doesn't quite matter for poe2
-      // value: floorToBracket(item.areaLevel!, [1, 68, 73, 79, 83]),
-      value: item.areaLevel!,
-      disabled: false,
-    };
-  } else if (item.category === ItemCategory.HeistBlueprint) {
-    filters.searchRelaxed = {
-      category: item.category,
-      disabled: true, // TODO: blocked by https://www.pathofexile.com/forum/view-thread/3109852
-    };
-    filters.searchExact = {
-      baseType: item.info.name,
-      baseTypeTrade: t(opts, item.info),
-    };
-
-    filters.areaLevel = {
-      value: item.areaLevel!,
-      disabled: false,
-    };
-
-    if (item.heist?.wingsRevealed) {
-      filters.heistWingsRevealed = {
-        value: item.heist.wingsRevealed,
-        disabled: false,
-      };
-    }
   } else if (item.rarity === ItemRarity.Unique && item.info.unique) {
     filters.searchExact = {
       name: item.info.name,
@@ -390,8 +348,6 @@ export function createFilters(
       maxUsefulItemLevel(item.category) !== 1 &&
       item.rarity !== ItemRarity.Unique &&
       item.category !== ItemCategory.Map &&
-      item.category !== ItemCategory.HeistBlueprint &&
-      item.category !== ItemCategory.HeistContract &&
       item.category !== ItemCategory.MemoryLine &&
       item.info.refName !== "Expedition Logbook"
     ) {

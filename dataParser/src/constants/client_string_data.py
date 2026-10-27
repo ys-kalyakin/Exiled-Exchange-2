@@ -96,12 +96,6 @@ CLIENT_STRING_KEY_VALUES: Sequence[BaseClientString] = [
     ClientString("CANNOT_USE_ITEM", ["ItemPopupCannotUseItem"]),
     # regex (gems)
     ClientString("AREA_LEVEL", ["ItemDisplayHeistContractLevel"], "{0}: "),
-    ClientString("HEIST_WINGS_REVEALED", ["ItemDisplayHeistBlueprintWings"], "{0}: "),
-    ClientString("HEIST_TARGET", ["ItemDisplayHeistContractObjective"]),
-    ClientString("HEIST_BLUEPRINT_ENCHANTS", ["HeistBlueprintRewardBunker"]),
-    ClientString("HEIST_BLUEPRINT_TRINKETS", ["HeistBlueprintRewardMines"]),
-    ClientString("HEIST_BLUEPRINT_GEMS", ["HeistBlueprintRewardReliquary"]),
-    ClientString("HEIST_BLUEPRINT_REPLICAS", ["HeistBlueprintRewardLibrary"]),
     ClientString("MIRRORED", ["ItemPopupMirrored"]),
     # regex (mod description)
     ClientString(
@@ -145,8 +139,6 @@ CLIENT_STRING_KEY_VALUES: Sequence[BaseClientString] = [
         keep_format_option=True,
     ),
     ClientString("CORRUPTED_IMPLICIT", ["ModDescriptionLineCorruptedImplicit"]),
-    ClientString("INCURSION_OPEN", ["ItemDescriptionIncursionAccessibleRooms"]),
-    ClientString("INCURSION_OBSTRUCTED", ["ItemDescriptionIncursionInaccessibleRooms"]),
     # regex eater exarch implicit
     ClientString("ELDRITCH_MOD_R1", ["EldritchCurrencyTier1"]),
     ClientString("ELDRITCH_MOD_R2", ["EldritchCurrencyTier2"]),
@@ -247,29 +239,8 @@ CLIENT_STRING_ARRAYS: list[ArrayClientString] = [
     ),
     ArrayClientString(
         [
-            ConstClientString("DELVE_MODS", "Subterranean"),
-            ConstClientString("DELVE_MODS", "of the Underground"),
-        ]
-    ),
-    ArrayClientString(
-        [
             ConstClientString("VEILED_MODS", "Chosen"),
             ConstClientString("VEILED_MODS", "of the Order"),
-        ]
-    ),
-    ArrayClientString(
-        [
-            ConstClientString("INCURSION_MODS", "Guatelitzi's"),
-            ConstClientString("INCURSION_MODS", "Xopec's"),
-            ConstClientString("INCURSION_MODS", "Topotante's"),
-            ConstClientString("INCURSION_MODS", "Tacati's"),
-            ConstClientString("INCURSION_MODS", "Matatl's"),
-            ConstClientString("INCURSION_MODS", "of Matatl"),
-            ConstClientString("INCURSION_MODS", "Citaqualotl's"),
-            ConstClientString("INCURSION_MODS", "of Citaqualotl"),
-            ConstClientString("INCURSION_MODS", "of Tacati"),
-            ConstClientString("INCURSION_MODS", "of Guatelitzi"),
-            ConstClientString("INCURSION_MODS", "of Puhuarte"),
         ]
     ),
 ]
@@ -279,8 +250,6 @@ CLIENT_STRING_REGEX: list[RegexClientString] = [
     CapturePlaceholderClientString("ITEM_EXCEPTIONAL", ["ExceptionalItem"]),
     # CapturePlaceholderClientString("ITEM_RUNEFORGED", ["RuneforgedItem"]),
     ConstRegexClientString("ITEM_RUNEFORGED", output="Runeforged (.*)"),
-    CapturePlaceholderClientString("MAP_BLIGHTED", ["InfectedMap"]),
-    CapturePlaceholderClientString("MAP_BLIGHT_RAVAGED", ["UberInfectedMap"]),
     CapturePlaceholderClientString("ITEM_SYNTHESISED", ["SynthesisedItem"], trim=True),
     CapturePlaceholderClientString(
         "FLASK_CHARGES", ["ItemDisplayChargesNCharges"], capture_str="\\\\d+"

@@ -39,10 +39,6 @@ title: Index Page
 - [No Item Mods](/no-item-mods.md)
 - [Nothing Happens](/nothing-happens.md)
 
-## O
-
-- [ORC](/ocr-guide.md)
-
 ## P
 
 - [Price Check](/price-check)

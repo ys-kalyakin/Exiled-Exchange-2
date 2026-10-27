@@ -56,38 +56,16 @@ export default {
   name: "map_check.name",
 };
 
-function tagToShowOrder(tag?: StatTag): number {
-  switch (tag) {
-    case StatTag.UberMapExclusive:
-      return 1;
-    case StatTag.HeistExclusive:
-      return 2;
-  }
-  return 0;
-}
-
 function findAllAreaMods(): StatMatcher[] {
   const out: StatMatcher[] = [];
   for (const stat of STATS_ITERATOR("AreaMods")) {
-    if (!stat.fromAreaMods && !stat.fromUberAreaMods && !stat.fromHeistAreaMods)
-      continue;
-
-    const tag =
-      stat.fromHeistAreaMods && !stat.fromAreaMods
-        ? StatTag.HeistExclusive
-        : stat.fromUberAreaMods && !stat.fromAreaMods
-          ? StatTag.UberMapExclusive
-          : undefined;
+    if (!stat.fromAreaMods) continue;
 
     for (const c of stat.matchers) {
-      out.push({ matchStr: c.string, tag });
+      out.push({ matchStr: c.string });
     }
   }
-  out.sort(
-    (a, b) =>
-      tagToShowOrder(a.tag) - tagToShowOrder(b.tag) ||
-      a.matchStr.localeCompare(b.matchStr),
-  );
+  out.sort((a, b) => a.matchStr.localeCompare(b.matchStr));
   return out;
 }
 </script>

@@ -109,7 +109,6 @@ STAT_DESCRIPTION_FILES_TYPE = Literal[
     "data@StatDescriptions@endgame_map_stat_descriptions.csd",
     "data@StatDescriptions@expedition_relic_stat_descriptions.csd",
     "data@StatDescriptions@gem_stat_descriptions.csd",
-    "data@StatDescriptions@heist_equipment_stat_descriptions.csd",
     "data@StatDescriptions@leaguestone_stat_descriptions.csd",
     "data@StatDescriptions@map_stat_descriptions.csd",
     "data@StatDescriptions@meta_gem_stat_descriptions.csd",
@@ -151,9 +150,6 @@ EXPEDITION_RELIC_STAT_DESCRIPTIONS: STAT_DESCRIPTION_FILES_TYPE = (
 )
 GEM_STAT_DESCRIPTIONS: STAT_DESCRIPTION_FILES_TYPE = (
     "data@StatDescriptions@gem_stat_descriptions.csd"
-)
-HEIST_EQUIPMENT_STAT_DESCRIPTIONS: STAT_DESCRIPTION_FILES_TYPE = (
-    "data@StatDescriptions@heist_equipment_stat_descriptions.csd"
 )
 LEAGUESTONE_STAT_DESCRIPTIONS: STAT_DESCRIPTION_FILES_TYPE = (
     "data@StatDescriptions@leaguestone_stat_descriptions.csd"
@@ -205,7 +201,6 @@ STAT_DESCRIPTION_FILES = (
     ENDGAME_MAP_STAT_DESCRIPTIONS,
     EXPEDITION_RELIC_STAT_DESCRIPTIONS,
     GEM_STAT_DESCRIPTIONS,
-    HEIST_EQUIPMENT_STAT_DESCRIPTIONS,
     LEAGUESTONE_STAT_DESCRIPTIONS,
     MAP_STAT_DESCRIPTIONS,
     META_GEM_STAT_DESCRIPTIONS,

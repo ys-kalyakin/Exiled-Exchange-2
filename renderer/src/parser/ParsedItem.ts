@@ -58,7 +58,6 @@ export interface ParsedItem {
   weaponCHAOS?: number;
   weaponRELOAD?: number;
   weaponSPIRIT?: number;
-  mapBlighted?: "Blighted" | "Blight-ravaged";
   mapTier?: number;
   mapPackSize?: number;
   mapItemRarity?: number;
@@ -107,10 +106,6 @@ export interface ParsedItem {
     text: string;
     type: ModifierType;
   }>;
-  heist?: {
-    wingsRevealed?: number;
-    target?: "Enchants" | "Trinkets" | "Gems" | "Replicas";
-  };
   note?: string;
   category?: ItemCategory;
   requires?: {
@@ -126,12 +121,6 @@ export interface ParsedItem {
   };
   info: BaseType;
   rawText: string;
-}
-
-// NOTE: should match option values on trade
-export enum IncursionRoom {
-  Open = 1,
-  Obstructed = 2,
 }
 
 export function createVirtualItem(

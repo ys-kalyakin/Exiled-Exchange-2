@@ -41,7 +41,6 @@ title: FAQ
   You have downloaded the source code, download [here](/download)
 
 - **I can't price check items in Divination Card stash tab.**\
-  **I can't price check rewards in Curio Display room (Heist Blueprints).**\
   **I can't check modifiers of the maps proposed by Kirac.**
 
   Yes, you can't. The game doesn't copy anything to clipboard when pressing `Ctrl + C` in these places.

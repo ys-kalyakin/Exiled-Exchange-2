@@ -9,11 +9,6 @@
         >{{ t("map.mods.outdated") }}</span
       >
       <span
-        v-if="matcher.tag === StatTag.HeistExclusive"
-        :class="[$style['tag'], $style['tag-heist']]"
-        >{{ t("map.mods.heist") }}</span
-      >
-      <span
         v-if="matcher.tag === StatTag.UberMapExclusive"
         :class="[$style['tag'], $style['tag-uber']]"
         >{{ t("map.mods.uber") }}</span
@@ -149,9 +144,6 @@ export default defineComponent({
   @apply px-1;
   @apply rounded;
   line-height: 1;
-}
-.tag-heist {
-  @apply bg-red-800;
 }
 .tag-uber {
   @apply bg-purple-600;

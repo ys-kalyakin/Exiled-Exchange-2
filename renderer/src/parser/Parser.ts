@@ -19,7 +19,6 @@ import {
 } from "./stat-translations";
 import { GEM, ItemCategory } from "./meta";
 import {
-  IncursionRoom,
   ParsedItem,
   ItemInfluence,
   ItemRarity,
@@ -160,10 +159,7 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
   parseWaystone,
   parseSockets,
   parseAugmentSockets,
-  parseHeistBlueprint,
   parseTrials,
-  parseAreaLevel,
-  parseAtzoatlRooms,
   parseMirroredTablet,
   parseFilledCoffin,
   parseMirrored,
@@ -179,7 +175,6 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
   parseModifiers, // explicit
   { virtual: transformToLegacyModifiers },
   { virtual: parseFractured },
-  { virtual: parseBlightedMap },
   { virtual: applyAugmentSockets },
   { virtual: applyElementalAdded },
   { virtual: pickCorrectVariant },
@@ -256,30 +251,6 @@ function normalizeName(item: ParserState) {
     const baseType = magicBasetype(item.name);
     if (baseType) {
       item.name = baseType;
-    }
-  }
-
-  if (item.rarity === ItemRarity.Normal || item.rarity === ItemRarity.Rare) {
-    if (item.baseType) {
-      if (_$REF.MAP_BLIGHTED.test(item.baseType)) {
-        item.baseType = _$REF.MAP_BLIGHTED.exec(item.baseType)![1];
-      } else if (_$REF.MAP_BLIGHT_RAVAGED.test(item.baseType)) {
-        item.baseType = _$REF.MAP_BLIGHT_RAVAGED.exec(item.baseType)![1];
-      } else if (_$.MAP_BLIGHTED.test(item.baseType)) {
-        item.baseType = _$.MAP_BLIGHTED.exec(item.baseType)![1];
-      } else if (_$.MAP_BLIGHT_RAVAGED.test(item.baseType)) {
-        item.baseType = _$.MAP_BLIGHT_RAVAGED.exec(item.baseType)![1];
-      }
-    } else {
-      if (_$REF.MAP_BLIGHTED.test(item.name)) {
-        item.name = _$REF.MAP_BLIGHTED.exec(item.name)![1];
-      } else if (_$REF.MAP_BLIGHT_RAVAGED.test(item.name)) {
-        item.name = _$REF.MAP_BLIGHT_RAVAGED.exec(item.name)![1];
-      } else if (_$.MAP_BLIGHTED.test(item.name)) {
-        item.name = _$.MAP_BLIGHTED.exec(item.name)![1];
-      } else if (_$.MAP_BLIGHT_RAVAGED.test(item.name)) {
-        item.name = _$.MAP_BLIGHT_RAVAGED.exec(item.name)![1];
-      }
     }
   }
 
@@ -462,26 +433,6 @@ function parseWaystone(section: string[], item: ParsedItem) {
     return "SECTION_PARSED";
   }
   return "SECTION_SKIPPED";
-}
-
-function parseBlightedMap(item: ParsedItem) {
-  performance.mark("parseBlightedMap");
-  if (item.category !== ItemCategory.Map) return;
-
-  const calc = item.statsByType.find(
-    (calc) =>
-      calc.type === ModifierType.Implicit &&
-      calc.stat.ref.startsWith("Area is infested with Fungal Growths"),
-  );
-  if (calc !== undefined) {
-    if (calc.sources[0].contributes!.value === 9) {
-      item.mapBlighted = "Blight-ravaged";
-      item.info.icon = ITEM_BY_REF("ITEM", "Blight-ravaged Map")![0].icon;
-    } else {
-      item.mapBlighted = "Blighted";
-      item.info.icon = ITEM_BY_REF("ITEM", "Blighted Map")![0].icon;
-    }
-  }
 }
 
 function parseFractured(item: ParserState) {
@@ -1645,45 +1596,6 @@ function parseCategoryByHelpText(section: string[], item: ParsedItem) {
   return "SECTION_SKIPPED";
 }
 
-function parseHeistBlueprint(section: string[], item: ParsedItem) {
-  performance.mark("parseHeistBlueprint");
-  if (item.category !== ItemCategory.HeistBlueprint) return "PARSER_SKIPPED";
-
-  parseAreaLevelNested(section, item);
-  if (!item.areaLevel) {
-    return "SECTION_SKIPPED";
-  }
-
-  item.heist = {};
-
-  for (const line of section) {
-    if (line.startsWith(_$.HEIST_TARGET)) {
-      const targetText = line.slice(_$.HEIST_TARGET.length);
-      switch (targetText) {
-        case _$.HEIST_BLUEPRINT_ENCHANTS:
-          item.heist.target = "Enchants";
-          break;
-        case _$.HEIST_BLUEPRINT_GEMS:
-          item.heist.target = "Gems";
-          break;
-        case _$.HEIST_BLUEPRINT_REPLICAS:
-          item.heist.target = "Replicas";
-          break;
-        case _$.HEIST_BLUEPRINT_TRINKETS:
-          item.heist.target = "Trinkets";
-          break;
-      }
-    } else if (line.startsWith(_$.HEIST_WINGS_REVEALED)) {
-      item.heist.wingsRevealed = parseInt(
-        line.slice(_$.HEIST_WINGS_REVEALED.length),
-        10,
-      );
-    }
-  }
-
-  return "SECTION_PARSED";
-}
-
 function parseTrials(section: string[], item: ParsedItem) {
   performance.mark("parseTrials");
   if (
@@ -1724,67 +1636,6 @@ function parseAreaLevelNested(section: string[], item: ParsedItem) {
       break;
     }
   }
-}
-
-function parseAreaLevel(section: string[], item: ParsedItem) {
-  performance.mark("parseAreaLevel");
-  if (
-    item.info.refName !== "Chronicle of Atzoatl" &&
-    item.info.refName !== "Expedition Logbook" &&
-    item.info.refName !== "Mirrored Tablet" &&
-    item.info.refName !== "Forbidden Tome"
-  )
-    return "PARSER_SKIPPED";
-
-  parseAreaLevelNested(section, item);
-
-  return item.areaLevel ? "SECTION_PARSED" : "SECTION_SKIPPED";
-}
-
-function parseAtzoatlRooms(section: string[], item: ParsedItem) {
-  performance.mark("parseAtzoatlRooms");
-  if (item.info.refName !== "Chronicle of Atzoatl") return "PARSER_SKIPPED";
-  if (section[0] !== _$.INCURSION_OPEN) return "SECTION_SKIPPED";
-
-  let state = IncursionRoom.Open;
-  for (const line of section.slice(1)) {
-    if (line === _$.INCURSION_OBSTRUCTED) {
-      state = IncursionRoom.Obstructed;
-      continue;
-    }
-
-    const found = STAT_BY_MATCH_STR(line);
-    if (found) {
-      item.newMods.push({
-        info: { tags: [], type: ModifierType.Pseudo },
-        stats: [
-          {
-            stat: found.stat,
-            translation: {
-              string:
-                state === IncursionRoom.Open
-                  ? found.matcher.string
-                  : `${_$.INCURSION_OBSTRUCTED} ${found.matcher.string}`,
-            },
-            roll: {
-              value: state,
-              min: state,
-              max: state,
-              dp: false,
-              unscalable: true,
-            },
-          },
-        ],
-      });
-    } else {
-      item.unknownModifiers.push({
-        text: line,
-        type: ModifierType.Pseudo,
-      });
-    }
-  }
-
-  return "SECTION_PARSED";
 }
 
 function parseMirroredTablet(section: string[], item: ParsedItem) {

@@ -5,7 +5,6 @@ import { HostConfig, ShortcutAction } from "@ipc/types";
 import type * as widget from "./overlay/widgets";
 import type { StashSearchWidget } from "./stash-search/widget";
 import type { ItemCheckWidget } from "./item-check/widget";
-import type { ItemSearchWidget } from "./item-search/widget";
 import { registry as widgetRegistry } from "./overlay/widget-registry.js";
 import { LibraryWidget } from "./library/widget";
 // fork: gamepad support
@@ -165,7 +164,7 @@ export interface Config {
 }
 
 export const defaultConfig = (): Config => ({
-  configVersion: 38,
+  configVersion: 39,
   overlayKey: "Shift + Space",
   overlayBackground: "rgba(129, 139, 149, 0.15)",
   overlayBackgroundClose: true,
@@ -241,25 +240,13 @@ export const defaultConfig = (): Config => ({
   gamepad: defaultGamepadConfig(), // fork: gamepad support
 });
 
-function upgradeConfig(_config: Config): Config {
+export function upgradeConfig(_config: Config): Config {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const config = _config as Omit<Config, "widgets"> & {
     widgets: Array<Record<string, any>>;
   };
 
   if (config.configVersion < 3) {
-    config.widgets.push({
-      ...defaultConfig().widgets.find((w) => w.wmType === "image-strip")!,
-      wmId: Math.max(0, ...config.widgets.map((_) => _.wmId)) + 1,
-      wmZorder: null,
-    });
-
-    config.widgets.push({
-      ...defaultConfig().widgets.find((w) => w.wmType === "delve-grid")!,
-      wmId: Math.max(0, ...config.widgets.map((_) => _.wmId)) + 1,
-      wmZorder: null,
-    });
-
     config.widgets.find((w) => w.wmType === "menu")!.alwaysShow = false;
 
     config.configVersion = 3;
@@ -275,15 +262,6 @@ function upgradeConfig(_config: Config): Config {
       e.matcher = e.matchRef;
       e.matchRef = undefined;
     });
-
-    {
-      const widgets = config.widgets.filter((w) => w.wmType === "image-strip")!;
-      widgets.forEach((imgStrip: any) => {
-        imgStrip.images.forEach((e: any, idx: number) => {
-          e.id = idx;
-        });
-      });
-    }
 
     config.configVersion = 4;
   }
@@ -406,17 +384,6 @@ function upgradeConfig(_config: Config): Config {
   }
 
   if (config.configVersion < 14) {
-    const imgWidgets = config.widgets.filter(
-      (w) => w.wmType === "image-strip",
-    ) as widget.ImageStripWidget[];
-    imgWidgets.forEach((imgStrip) => {
-      imgStrip.images.forEach((e) => {
-        e.url = e.url.startsWith("app-file://")
-          ? e.url.slice("app-file://".length)
-          : e.url;
-      });
-    });
-
     const itemCheck = config.widgets.find(
       (w) => w.wmType === "item-check",
     ) as ItemCheckWidget;
@@ -433,11 +400,6 @@ function upgradeConfig(_config: Config): Config {
       (w) => w.wmType === "price-check",
     ) as widget.PriceCheckWidget;
     priceCheck.builtinBrowser = false;
-
-    const itemSearch = config.widgets.find(
-      (w) => w.wmType === "item-search",
-    ) as ItemSearchWidget;
-    itemSearch.ocrGemsKey = null;
 
     const itemCheck = config.widgets.find(
       (w) => w.wmType === "item-check",
@@ -460,11 +422,6 @@ function upgradeConfig(_config: Config): Config {
   }
 
   if (config.configVersion < 16) {
-    const delve = config.widgets.find(
-      (w) => w.wmType === "delve-grid",
-    ) as widget.DelveGridWidget;
-    delve.toggleKey = (config as any).delveGridKey;
-
     const itemCheck = config.widgets.find(
       (w) => w.wmType === "item-check",
     ) as ItemCheckWidget;
@@ -717,6 +674,15 @@ function upgradeConfig(_config: Config): Config {
 
     config.configVersion = 38;
   }
+
+  if (config.configVersion < 39) {
+    // NOTE: PoE1-only widgets removed (remove-poe1-only-features)
+    config.widgets = config.widgets.filter(
+      (w) => w.wmType !== "delve-grid" && w.wmType !== "image-strip",
+    );
+
+    config.configVersion = 39;
+  }
   /* eslint-enable */
 
   return config as unknown as Config;
@@ -794,15 +760,6 @@ function getConfigForHost(): HostConfig {
     });
   }
 
-  const delveGrid = AppConfig("delve-grid") as widget.DelveGridWidget;
-  if (delveGrid.toggleKey) {
-    actions.push({
-      shortcut: delveGrid.toggleKey,
-      gamepadCombo: delveGrid.gamepadHotkey || undefined, // fork: gamepad support
-      action: { type: "trigger-event", target: "delve-grid" },
-      keepModKeys: true,
-    });
-  }
   for (const command of config.commands) {
     if (command.hotkey) {
       actions.push({
@@ -848,15 +805,6 @@ function getConfigForHost(): HostConfig {
             type: "trigger-event",
             target: `stopwatch-reset:${widget.wmId}`,
           },
-        });
-      }
-    } else if (widget.wmType === "item-search") {
-      const itemSearch = widget as ItemSearchWidget;
-      if (itemSearch.ocrGemsKey) {
-        actions.push({
-          shortcut: itemSearch.ocrGemsKey,
-          keepModKeys: true,
-          action: { type: "ocr-text", target: "heist-gems" },
         });
       }
     }

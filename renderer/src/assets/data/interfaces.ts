@@ -37,8 +37,6 @@ export interface Stat {
   matchers: StatMatcher[];
   better: StatBetter;
   fromAreaMods?: true;
-  fromUberAreaMods?: true;
-  fromHeistAreaMods?: true;
   anointments?: Array<{ roll: number; oils: string }>; // Ring anointments
   trade: {
     inverted?: true;
@@ -141,8 +139,6 @@ export interface TranslationDict {
   UNIDENTIFIED: RegExp;
   ITEM_SUPERIOR: RegExp;
   ITEM_EXCEPTIONAL: RegExp;
-  MAP_BLIGHTED: RegExp;
-  MAP_BLIGHT_RAVAGED: RegExp;
   INFLUENCE_SHAPER: string;
   INFLUENCE_ELDER: string;
   INFLUENCE_CRUSADER: string;
@@ -167,12 +163,6 @@ export interface TranslationDict {
   QUALITY_DIVERGENT: RegExp;
   QUALITY_PHANTASMAL: RegExp;
   AREA_LEVEL: string;
-  HEIST_WINGS_REVEALED: string;
-  HEIST_TARGET: string;
-  HEIST_BLUEPRINT_ENCHANTS: string;
-  HEIST_BLUEPRINT_TRINKETS: string;
-  HEIST_BLUEPRINT_GEMS: string;
-  HEIST_BLUEPRINT_REPLICAS: string;
   MIRRORED: string;
   MODIFIER_LINE: RegExp;
   PREFIX_MODIFIER: string;
@@ -183,8 +173,6 @@ export interface TranslationDict {
   UNSCALABLE_VALUE: string;
   CORRUPTED_IMPLICIT: string;
   MODIFIER_INCREASED: RegExp;
-  INCURSION_OPEN: string;
-  INCURSION_OBSTRUCTED: string;
   EATER_IMPLICIT: RegExp;
   EXARCH_IMPLICIT: RegExp;
   ELDRITCH_MOD_R1: string;
@@ -200,9 +188,7 @@ export interface TranslationDict {
   HUNTER_MODS: string[];
   REDEEMER_MODS: string[];
   WARLORD_MODS: string[];
-  DELVE_MODS: string[];
   VEILED_MODS: string[];
-  INCURSION_MODS: string[];
   FOIL_UNIQUE: string;
   UNMODIFIABLE: string;
   REQUIREMENTS: string;

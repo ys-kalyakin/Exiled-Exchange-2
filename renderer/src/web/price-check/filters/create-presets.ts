@@ -52,8 +52,6 @@ export function createPresets(
       item.category === ItemCategory.Tincture ||
       item.category === ItemCategory.MemoryLine ||
       item.category === ItemCategory.Invitation ||
-      item.category === ItemCategory.HeistContract ||
-      item.category === ItemCategory.HeistBlueprint ||
       item.category === ItemCategory.Sentinel ||
       item.category === ItemCategory.Tablet ||
       item.category === ItemCategory.Wombgift) &&

@@ -71,7 +71,7 @@ Gamepad navigation no longer fires while a combo capture is armed.
    to unpin — the menu has no close control).
 2. ~~**Map check**~~ shipped (stat rows cycle the decision with A; B hides).
 3. ~~**Item check, stash search, notepad, library, stopwatch**~~ registered
-   (library is inert until the alpha is enabled; image strip included too).
+   (library is inert until the alpha is enabled).
 4. ~~**Item editor**~~ numeric inputs step with left/right like any control;
    no text entry yet.
 5. ~~**Settings window**~~ shipped via DOM-derived rows (no per-page markers

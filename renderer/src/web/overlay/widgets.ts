@@ -72,19 +72,6 @@ export interface StopwatchWidget extends Widget {
   resetKey: string | null;
 }
 
-export interface DelveGridWidget extends Widget {
-  toggleKey: string | null;
-  gamepadHotkey: string | null; // fork: gamepad support
-}
-
-export interface ImageStripWidget extends Widget {
-  anchor: Anchor;
-  images: Array<{
-    id: number;
-    url: string;
-  }>;
-}
-
 export interface NotepadWidget extends Widget {
   anchor: Anchor;
   notepadBody: string;

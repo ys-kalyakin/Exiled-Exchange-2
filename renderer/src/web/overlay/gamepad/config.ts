@@ -52,7 +52,7 @@ export function upgradeGamepadConfig(config: {
     priceCheck.gamepadHotkeyLocked = "L3 + RT";
   }
 
-  for (const wmType of ["item-check", "delve-grid"]) {
+  for (const wmType of ["item-check"]) {
     const widget = config.widgets.find((w) => w.wmType === wmType) as
       | Record<string, unknown>
       | undefined;
@@ -123,7 +123,7 @@ if (import.meta.vitest) {
       widgets: [
         { wmType: "price-check", apiLatencySeconds: 5 },
         { wmType: "item-check", hotkey: "Q" },
-        { wmType: "delve-grid", toggleKey: null },
+        { wmType: "item-search" },
         { wmType: "notepad" },
       ],
     };
@@ -140,7 +140,8 @@ if (import.meta.vitest) {
     expect(config.widgets[0].apiLatencySeconds).toBe(5);
     expect(config.widgets[1].gamepadHotkey).toBeNull();
     expect(config.widgets[1].hotkey).toBe("Q");
-    expect(config.widgets[2].gamepadHotkey).toBeNull();
+    // widget types without pad-openable actions stay untouched
+    expect(config.widgets[2].gamepadHotkey).toBeUndefined();
   });
 
   it("migration keeps existing values", () => {
@@ -163,7 +164,6 @@ if (import.meta.vitest) {
       widgets: [
         { wmType: "item-check", gamepadHotkey: null, hotkey: "Q" },
         { wmType: "item-check", gamepadHotkey: "SELECT + UP" },
-        { wmType: "delve-grid", gamepadHotkey: null },
       ],
     };
 
@@ -172,7 +172,6 @@ if (import.meta.vitest) {
     expect(config.widgets[0].gamepadHotkey).toBe("L3 + LT");
     expect(config.widgets[0].hotkey).toBe("Q");
     expect(config.widgets[1].gamepadHotkey).toBe("SELECT + UP");
-    expect(config.widgets[2].gamepadHotkey).toBeNull();
 
     // a pre-config-ux config: the field is missing entirely
     const legacy: { widgets: Array<Record<string, unknown>> } = {

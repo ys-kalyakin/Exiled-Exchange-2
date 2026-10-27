@@ -23,7 +23,6 @@ export class TestItem implements ParsedItem {
   weaponCHAOS?: number | undefined;
   weaponRELOAD?: number | undefined;
   weaponSPIRIT?: number;
-  mapBlighted?: "Blighted" | "Blight-ravaged" | undefined;
   mapTier?: number | undefined;
   mapPackSize?: number;
   mapItemRarity?: number;
@@ -62,12 +61,6 @@ export class TestItem implements ParsedItem {
   statsByType: StatCalculated[] = [];
   newMods: ParsedModifier[] = [];
   unknownModifiers: Array<{ text: string; type: ModifierType }> = [];
-  heist?:
-    | {
-        wingsRevealed?: number;
-        target?: "Enchants" | "Trinkets" | "Gems" | "Replicas";
-      }
-    | undefined;
 
   note?: string;
   category?: ItemCategory | undefined;

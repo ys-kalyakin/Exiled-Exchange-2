@@ -53,9 +53,6 @@ export default defineConfig({
         items: [{
           text: 'Chat commands',
           link: '/chat-commands'
-        }, {
-          text: 'OCR Guide',
-          link: '/ocr-guide'
         }]
       },
       {

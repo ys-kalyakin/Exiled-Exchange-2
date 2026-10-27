@@ -1,7 +1,6 @@
 import { BaseType } from "@/assets/data";
 import type { ItemInfluence, ItemCategory } from "@/parser";
 import type { StatCalculated } from "@/parser/modifiers";
-import type { ParsedItem } from "@/parser/ParsedItem";
 
 export interface FilterPreset {
   id: string;
@@ -65,9 +64,6 @@ export interface ItemFilters {
   quality?: FilterNumeric;
   gemLevel?: FilterNumeric;
   mapTier?: FilterNumeric;
-  mapBlighted?: {
-    value: NonNullable<ParsedItem["mapBlighted"]>;
-  };
   itemLevel?: FilterNumeric;
   stackSize?: FilterNumeric;
   unidentified?: {
@@ -89,7 +85,6 @@ export interface ItemFilters {
     disabled: boolean;
   };
   areaLevel?: FilterNumeric;
-  heistWingsRevealed?: FilterNumeric;
   sentinelCharge?: FilterNumeric;
   trade: {
     offline: boolean;
@@ -223,9 +218,7 @@ export enum FilterTag {
   Hunter = "explicit-hunter",
   Redeemer = "explicit-redeemer",
   Warlord = "explicit-warlord",
-  Delve = "explicit-delve",
   Unveiled = "explicit-veiled",
-  Incursion = "explicit-incursion",
   Augment = "rune",
   AddedAugment = "added-rune",
   Desecrated = "desecrated",

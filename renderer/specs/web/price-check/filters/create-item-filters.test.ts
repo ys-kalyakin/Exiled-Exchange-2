@@ -154,23 +154,22 @@ describe("rarity filter", () => {
     },
   );
 
-  it.each([
-    [ItemRarity.Normal],
-    [ItemRarity.Magic],
-    [ItemRarity.Rare],
-  ])("#. Should use nonunique in legacy mode (%s)", (rarity) => {
-    const item: ParsedItem = {
-      ...createTestItem(),
-      rarity,
-    };
+  it.each([[ItemRarity.Normal], [ItemRarity.Magic], [ItemRarity.Rare]])(
+    "#. Should use nonunique in legacy mode (%s)",
+    (rarity) => {
+      const item: ParsedItem = {
+        ...createTestItem(),
+        rarity,
+      };
 
-    const res = createFilters(item, {
-      ...createTestCreateOptions(),
-      rarityFilter: "nonunique",
-    });
+      const res = createFilters(item, {
+        ...createTestCreateOptions(),
+        rarityFilter: "nonunique",
+      });
 
-    expect(res.rarity).toEqual({ value: "nonunique" });
-  });
+      expect(res.rarity).toEqual({ value: "nonunique" });
+    },
+  );
 
   it.each([ItemRarity.Normal, ItemRarity.Magic, ItemRarity.Rare])(
     "#. Should omit rarity filter in off mode (%s)",

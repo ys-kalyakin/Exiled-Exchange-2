@@ -10,7 +10,6 @@ import {
 import { typeInChat, stashSearch } from "./text-box";
 import { WidgetAreaTracker } from "../windowing/WidgetAreaTracker";
 import { HostClipboard } from "./HostClipboard";
-import { OcrWorker } from "../vision/link-main";
 import type { ShortcutAction } from "../../../ipc/types";
 import type { Logger } from "../RemoteLogger";
 import type { OverlayWindow } from "../windowing/OverlayWindow";
@@ -53,14 +52,12 @@ export class Shortcuts {
     gameConfig: GameConfig,
     server: ServerEvents,
   ) {
-    const ocrWorker = await OcrWorker.create();
     const shortcuts = new Shortcuts(
       logger,
       overlay,
       poeWindow,
       gameConfig,
       server,
-      ocrWorker,
     );
     return shortcuts;
   }
@@ -71,7 +68,6 @@ export class Shortcuts {
     private poeWindow: GameWindow,
     private gameConfig: GameConfig,
     private server: ServerEvents,
-    private ocrWorker: OcrWorker,
   ) {
     this.areaTracker = new WidgetAreaTracker(server, overlay);
     this.clipboard = new HostClipboard(logger);
@@ -206,12 +202,10 @@ export class Shortcuts {
     stashScroll: boolean,
     logKeys: boolean,
     restoreClipboard: boolean,
-    language: string,
   ) {
     this.stashScroll = stashScroll;
     this.logKeys = logKeys;
     this.clipboard.updateOptions(restoreClipboard);
-    this.ocrWorker.updateOptions(language);
 
     const copyItemShortcut = mergeTwoHotkeys(
       "Ctrl + C",
@@ -431,33 +425,6 @@ export class Shortcuts {
           })
           .catch(() => {});
       })();
-    } else if (
-      entry.action.type === "ocr-text" &&
-      entry.action.target === "heist-gems"
-    ) {
-      if (process.platform !== "win32") return;
-
-      const { action } = entry;
-      const pressTime = Date.now();
-      const imageData = this.poeWindow.screenshot();
-      this.ocrWorker
-        .findHeistGems({
-          width: this.poeWindow.bounds.width,
-          height: this.poeWindow.bounds.height,
-          data: imageData,
-        })
-        .then((result) => {
-          this.server.sendEventTo("last-active", {
-            name: "MAIN->CLIENT::ocr-text",
-            payload: {
-              target: action.target,
-              pressTime,
-              ocrTime: result.elapsed,
-              paragraphs: result.recognized.map((p) => p.text),
-            },
-          });
-        })
-        .catch(() => {});
     }
   }
 
