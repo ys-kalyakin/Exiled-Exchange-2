@@ -72,8 +72,19 @@ export class HostClipboard {
   }
 
   // Electron 44 made clipboard.readText async, so polling is promise-based
+  /**
+   * The caller must have run `prepareForItemRead()` for this attempt,
+   * before injecting the copy keys — publishing the workaround token here,
+   * after the injection, would clobber item text the game just copied.
+   * A call while a poll is in flight joins it and never rewrites the token.
+   */
   async readItemText(): Promise<string> {
-    await this.prepareForItemRead();
+    if (this.pollPromise) {
+      // joined press: the token is already on the clipboard, so just
+      // restart the timeout window for the second copy attempt
+      this.elapsed = 0;
+      return await this.pollPromise;
+    }
     this.pollPromise ??= this.pollForItem();
     return await this.pollPromise;
   }

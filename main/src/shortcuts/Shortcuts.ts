@@ -392,8 +392,11 @@ export class Shortcuts {
       const pressPosition =
         getKWinBridge()?.lastCursor ?? screen.getCursorScreenPoint();
 
-      // Inject the copy hotkey only after the workaround token is published:
-      // the game skips writing the clipboard while its content is unchanged.
+      // The workaround token is published exactly once per attempt and
+      // strictly before the copy keys are injected — `readItemText` does
+      // not re-prepare. The game skips writing the clipboard while its
+      // content is unchanged, so any post-injection write would clobber
+      // the item text it just copied.
       void (async () => {
         try {
           await this.clipboard.prepareForItemRead();
