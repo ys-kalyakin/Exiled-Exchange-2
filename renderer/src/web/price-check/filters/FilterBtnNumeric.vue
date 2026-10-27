@@ -144,6 +144,8 @@ export default defineComponent({
   line-height: 1.25rem;
   display: flex;
   align-items: center;
+  /* keep the label clear of the natural value / threshold editor */
+  @apply gap-x-1.5;
 
   &.dimmed {
     @apply opacity-60;

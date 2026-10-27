@@ -7,7 +7,7 @@
     <HotkeyInput
       v-if="'value' in schema.config"
       v-model="schema.config.value"
-      class="w-36"
+      class="w-48 shrink-0"
       :required="schema.required"
     />
     <div
@@ -16,7 +16,7 @@
         $style.splitKey,
         { [$style.unset]: !schema.config.modKey.value },
       ]"
-      class="w-36"
+      class="w-48 shrink-0"
     >
       <button
         :class="{ [$style.active]: schema.config.modKey.value === 'Ctrl' }"

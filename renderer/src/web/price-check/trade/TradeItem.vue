@@ -236,6 +236,8 @@ export default defineComponent({
       if (id.includes("regal")) return "/images/regal.png";
       if (id.includes("transmute")) return "/images/transmute.png";
       if (id.includes("aug")) return "/images/aug.png";
+      if (id.includes("alch")) return "/images/alch.png";
+      if (id.includes("mirror")) return "/images/mirror.png";
       return undefined;
     });
 
