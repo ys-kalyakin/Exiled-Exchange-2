@@ -38,7 +38,7 @@ Before dispatching an action the class SHALL release the combo keys from the OS 
 - **THEN** only the non-mod key (e.g. `D`) is released, modifiers stay held so the game receives Ctrl+C
 
 ### Requirement: Action dispatch by type
-The handler SHALL dispatch by `action.type`: `toggle-overlay`, `paste-in-chat`, `trigger-event` (widget-action broadcast), `stash-search`, `copy-item`, `ocr-text` with target `heist-gems` (Windows only), and `test-only` (registered, then immediately unregistered). Injection actions (`copy-item`, `paste-in-chat`, `stash-search`) SHALL dispatch only when input injection is available on the platform; without a helper on Wayland they SHALL be disabled with a user-visible notice.
+The handler SHALL dispatch by `action.type`: `toggle-overlay`, `paste-in-chat`, `trigger-event` (widget-action broadcast), `stash-search`, `copy-item`, and `test-only`. The removed `ocr-text` action type SHALL NOT be dispatched. Injection actions (`copy-item`, `paste-in-chat`, `stash-search`) SHALL dispatch only when input injection is available; without a helper on Wayland they SHALL be disabled with a user-visible notice.
 
 #### Scenario: stash-search action
 - **WHEN** a `stash-search` shortcut fires
@@ -47,6 +47,10 @@ The handler SHALL dispatch by `action.type`: `toggle-overlay`, `paste-in-chat`, 
 #### Scenario: copy-item without injection helper on Wayland
 - **WHEN** a `copy-item` shortcut fires on the Wayland backend while no injection helper is available
 - **THEN** the action is not dispatched and the user sees a notice naming the missing injection helper
+
+#### Scenario: ocr-text action no longer exists
+- **WHEN** a saved config still contains a shortcut action of type `ocr-text`
+- **THEN** no screenshot is taken, no event is sent, and the shortcut list simply ignores the entry
 
 ### Requirement: Gamepad combination registration
 For entries with `gamepadCombo` the class SHALL register the combination on a single `gamepad-io` Gamepad instance created from `gamepadConfigs.eightBitDoPro2`. Gamepad event subscriptions SHALL be created once for the lifetime of the class, and re-registration when shortcuts re-register SHALL be idempotent: no duplicate event listeners and no failures when a combination is already registered. The `gamepadCombo` of an entry SHALL come from the renderer configuration (the widget config owning the entry) instead of being hardcoded. When shortcuts re-register, combinations no longer present in the current actions SHALL be unregistered.
