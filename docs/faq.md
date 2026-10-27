@@ -71,6 +71,6 @@ title: FAQ
 
 - **Is exiledexchange2.com an official website?**
 
-  No, the only official website is <https://kvan7.github.io/Exiled-Exchange-2/> and the official github repo is <https://github.com/Kvan7/Exiled-Exchange-2>. Any other mirrors are not known to the developer, downloading from them may be unsafe or malicious.
+  No. The official website of this fork is <https://ys-kalyakin.github.io/Exiled-Exchange-2/> and its official repository is <https://github.com/ys-kalyakin/Exiled-Exchange-2>. This fork is based on <https://github.com/Kvan7/Exiled-Exchange-2>, the original Exiled Exchange 2 project. Any other mirrors are not known to the developers, downloading from them may be unsafe or malicious.
 
 - [Index Page](/index-page.md)

@@ -56,7 +56,7 @@ The app is unsigned, so you will have to bypass Windows security warnings to run
 
 ## FAQ
 
-<https://kvan7.github.io/Exiled-Exchange-2/faq>
+<https://ys-kalyakin.github.io/Exiled-Exchange-2/faq>
 
 ## Tool showcase
 

@@ -32,7 +32,7 @@ export default defineConfig({
       {
         text: 'GitHub',
         color: '#181717',
-        link: 'https://github.com/Kvan7/Exiled-Exchange-2'
+        link: 'https://github.com/ys-kalyakin/Exiled-Exchange-2'
       }
     ],
     sidebar: [
