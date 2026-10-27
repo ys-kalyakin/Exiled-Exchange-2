@@ -31,7 +31,10 @@ import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   filter: {
-    type: Object as PropType<{ disabled: boolean }>, // will be mutated directly, instead of emit
+    // will be mutated directly, instead of emit
+    // disabled is optional: some filters (e.g. the rarity chip) treat it as
+    // "enabled" until first toggled
+    type: Object as PropType<{ disabled?: boolean }>,
     required: true,
   },
   text: { type: String, required: true },
