@@ -20,6 +20,7 @@ This fork adds **gamepad (controller) support** and a **native KDE Plasma 6 Wayl
 ### Linux support (X11 and KDE Plasma 6 Wayland)
 
 - Native Wayland overlay on KDE Plasma 6 through a KWin script bridge: game window tracking, overlay positioning and global shortcuts are handled through KWin. X11 sessions are unaffected.
+- On KDE Plasma 6 Wayland, key injection (Copy Item, Paste-in-Chat, Stash Search) needs the external [ydotool](https://github.com/ReimuNotMoe/ydotool) helper: install the `ydotool` package (1.0.4+), have `ydotoold` running with access to `/dev/uinput`, then restart the app. Full steps: [KDE Plasma 6 Wayland setup](https://ys-kalyakin.github.io/Exiled-Exchange-2/kde-setup).
 - Linux AppImage builds with automatic updates, published alongside the Windows installer and portable builds.
 
 ### Tag-driven releases

@@ -43,6 +43,9 @@ export default defineConfig({
         }, {
           text: 'Quick Start',
           link: '/quick-start'
+        }, {
+          text: 'KDE setup',
+          link: '/kde-setup'
         }
         ]
       },

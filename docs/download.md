@@ -44,6 +44,10 @@ In order for Exiled Exchange 2 to have access to the PoE window, it must be star
 
 ❌ **Not compatible with "GeForce Now" or any other cloud gaming service that do not forward clipboard data.**
 
+Linux: on KDE Plasma 6 Wayland the native Wayland backend needs the
+`ydotool`/`ydotoold` helper setup before Copy Item, Paste-in-Chat and Stash
+Search work — see the [KDE setup](/kde-setup) page.
+
 ---
 
 ### Moving from POE1/Awakened PoE Trade

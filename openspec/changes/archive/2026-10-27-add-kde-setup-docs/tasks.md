@@ -1,0 +1,28 @@
+# Tasks
+
+## 1. KDE setup page (`docs/kde-setup.md`)
+
+- [x] 1.1 Create `docs/kde-setup.md` (front-matter `title: KDE Plasma 6 Wayland setup`) with sections: what the Wayland backend does automatically and what it requires (KDE Plasma 6; `--overlay-backend=x11|wayland` per `docs/cmd-flags.md`); installing the `ydotool` package with example commands for Arch (`pacman`), Debian/Ubuntu (`apt`), Fedora (`dnf`), openSUSE (`zypper`) plus a generic instruction for unlisted distros; starting `ydotoold` (distro systemd unit → socket `/run/ydotoold.socket`, and a systemd **user** unit → socket under `$XDG_RUNTIME_DIR` matching an app-probed path, e.g. `%t/ydotoold.socket`); uinput access (`/dev/uinput` udev rule or `input` group membership, module check); helper detection and verification (binary on `PATH` via `command -v ydotool`, socket probe list and `$YDOTOOL_SOCKET` override from `main/src/shortcuts/InputInjector.ts` — probe order: `$YDOTOOL_SOCKET`, `$XDG_RUNTIME_DIR/ydotool.socket`, `$XDG_RUNTIME_DIR/ydotoold.socket`, `$XDG_RUNTIME_DIR/.ydotool_socket`, `/tmp/.ydotool_socket`, `/run/ydotoold.socket`); what the "injection helper not running" notice means (Copy Item, Paste-in-Chat, Stash Search disabled until `ydotool` + running `ydotoold`, matching the `injection_unavailable` notice in `renderer/public/data/en/app_i18n.json`); Wayland limitations (Ctrl+MouseWheel stash scroll unavailable on Wayland, Klipper clipboard with wl-clipboard fallback, Windowed (Borderless) Fullscreen instead of exclusive XWayland fullscreen, `--overlay-backend=x11` fallback). Verify: file exists in upstream-aligned doc style, and every factual claim maps to a cited module (`main/src/shortcuts/InputInjector.ts`, `main/src/windowing/kwin/index.ts`, `main/src/shortcuts/Shortcuts.ts`, `main/src/shortcuts/HostClipboard.ts`/`WaylandClipboard.ts`).
+- [x] 1.2 Verify the installation/setup instructions against current distro facts before publish (package names include `ydotool` and whether `ydotoold` ships in the same package or a split one, unit name `ydotoold.service`, uinput rule specifics per family) using the ydotool upstream README and distro package index pages at implementation time. Verify: each command in the page is annotated as an example and the distro-specific claims (package/unit names) are confirmed or corrected; corrections land in the page.
+- [x] 1.3 Keep the page accurate on socket discovery: check the written probe list matches `main/src/shortcuts/InputInjector.ts` (`findYdotooldSocket`). Verify: `grep -F`-style comparison of the documented list against the source `candidates` array shows identical order and paths (no stale paths, none missing).
+
+## 2. Sidebar and README
+
+- [x] 2.1 `docs/.vitepress/config.js`: add a `{ text: 'KDE setup', link: '/kde-setup' }` item after "Quick Start" in the first sidebar group; change nothing else. Verify: a `node` one-liner evaluating the config prints the new entry, and the previously existing sidebar entries and links are unchanged.
+- [x] 2.2 `README.md`: extend the "Linux support (X11 and KDE Plasma 6 Wayland)" section with a short ydotool setup summary (install `ydotool`, have `ydotoold` running, access to `/dev/uinput`) and a link to the full docs-page instructions (`https://ys-kalyakin.github.io/Exiled-Exchange-2/kde-setup`); keep it localized to that section and in upstream style. Verify: `grep -n "ydotoold" README.md` matches the new summary, the `latest-linux.yml` artifact-name pattern the version hook greps is still present (no `versionCheck.py` regression), and the section still contains no other edits (`git diff --stat README.md` shows one localized region).
+
+## 3. Cross-links from onboarding and troubleshooting
+
+- [x] 3.1 `docs/download.md`: in the Requirements section, add a short Linux note (on KDE Plasma 6 Wayland the Wayland backend needs `ydotool`/`ydotoold` before Copy Item, Paste-in-Chat and Stash Search work) linking to `/kde-setup`. Verify: link rendered to the flat site address (`/Exiled-Exchange-2/kde-setup`) and no other lines changed (`git diff` shows only the added block).
+- [x] 3.2 `docs/issues.md`: in the Linux section, link to the setup page from the passage explaining the ydotool requirement, and keep the existing wording otherwise. Verify: `grep -n "kde-setup" docs/issues.md` matches once and the existing paragraphs are not reflowed.
+
+## 4. Build and consistency checks
+
+- [x] 4.1 Build the docs site locally (`npm install` in `docs/` if needed, then `npm run build`). Verify: build succeeds; `docs/.vitepress/dist/kde-setup.html` exists and contains the install commands and socket path list; `dist/download.html` and `dist/issues.html` both link to `/Exiled-Exchange-2/kde-setup`.
+- [x] 4.2 Run `python versionCheck.py` from the repo root. Verify: "Version check passed".
+- [x] 4.3 CI-parity checks: `cd renderer && npm run lint && npm run check-types && npm run test`; `cd ../main && npm run lint && npm run check-types`. Verify: all pass — no app source files are touched, so no changes are expected.
+- [x] 4.4 Accuracy pass over the rendered page against the code facts (probe order per task 1.3, disabled-action list per `injection_unavailable` notice, backend detection per `main/src/windowing/kwin/index.ts` `detectBackend`, stash-scroll availability per `Shortcuts.ts` `stashScrollSupported`). Verify: no documented behavior contradicts a cited source, and the page links from README, download, issues, and the sidebar all resolve.
+
+## Workflow follow-up
+
+- Archive the change after the project's review requirements are satisfied so the `linux-setup-docs` master spec is created.

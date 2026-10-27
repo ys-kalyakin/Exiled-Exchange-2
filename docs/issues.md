@@ -63,3 +63,6 @@ fallback). Use the game's Windowed (Borderless) Fullscreen display mode:
 activating the overlay needs to deactivate the game on Wayland, and with
 exclusive fullscreen XWayland games that un-fullscreens (or minimizes)
 the game. Use `--overlay-backend=x11` to fall back to the X11 mode.
+
+For installing `ydotool`, starting `ydotoold` and the uinput permissions,
+see the [KDE Plasma 6 Wayland setup](/kde-setup) page.
