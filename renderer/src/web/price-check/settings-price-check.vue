@@ -164,6 +164,20 @@
     <ui-checkbox class="mb-4" v-model="defaultAllSelected">{{
       t(":default_all_selected")
     }}</ui-checkbox>
+    <div class="mb-4">
+      <div class="flex-1 mb-1">{{ t(":rarity_filter") }}</div>
+      <div class="mb-1 flex">
+        <ui-radio v-model="rarityFilter" value="match" class="mr-4">{{
+          t(":rarity_filter_match")
+        }}</ui-radio>
+        <ui-radio v-model="rarityFilter" value="nonunique" class="mr-4">{{
+          t(":rarity_filter_nonunique")
+        }}</ui-radio>
+        <ui-radio v-model="rarityFilter" value="off">{{
+          t(":rarity_filter_off")
+        }}</ui-radio>
+      </div>
+    </div>
     <ui-checkbox class="mb-4" v-model="alwaysShowTier">{{
       t(":always_show_tier")
     }}</ui-checkbox>
@@ -352,6 +366,7 @@ export default defineComponent({
         () => configWidget.value,
         "defaultAllSelected",
       ),
+      rarityFilter: configModelValue(() => configWidget.value, "rarityFilter"),
       leagues,
       availableCoreCurrencies,
       tooltipHover: configModelValue(

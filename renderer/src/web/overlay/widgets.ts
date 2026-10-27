@@ -52,6 +52,7 @@ export interface PriceCheckWidget extends Widget {
   builtinBrowser: boolean;
   rememberCurrency: boolean;
   defaultAllSelected: boolean;
+  rarityFilter: "match" | "nonunique" | "off";
   itemHoverTooltip: "off" | "keybind" | "always";
   alwaysShowTier: boolean;
   coreCurrency: "exalted" | "chaos";

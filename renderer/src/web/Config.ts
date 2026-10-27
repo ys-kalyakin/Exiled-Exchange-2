@@ -165,7 +165,7 @@ export interface Config {
 }
 
 export const defaultConfig = (): Config => ({
-  configVersion: 37,
+  configVersion: 38,
   overlayKey: "Shift + Space",
   overlayBackground: "rgba(129, 139, 149, 0.15)",
   overlayBackgroundClose: true,
@@ -706,6 +706,16 @@ function upgradeConfig(_config: Config): Config {
     upgradeItemCheckCombo(config);
 
     config.configVersion = 37;
+  }
+
+  if (config.configVersion < 38) {
+    // NOTE: fork: rarity-aware search (price-check-rarity-filter)
+    const priceCheck = config.widgets.find(
+      (w) => w.wmType === "price-check",
+    ) as widget.PriceCheckWidget;
+    priceCheck.rarityFilter = "match";
+
+    config.configVersion = 38;
   }
   /* eslint-enable */
 

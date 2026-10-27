@@ -182,6 +182,7 @@ export default defineComponent({
           currency: undefined,
           listingType: undefined,
           defaultAllSelected: false,
+          rarityFilter: "match",
         });
 
         performance.mark("checked-item-switch-item-end");

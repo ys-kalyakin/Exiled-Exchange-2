@@ -27,6 +27,7 @@ export function createUniquePresets(
     searchStatRange: number;
     useEn: boolean;
     defaultAllSelected: boolean;
+    rarityFilter: "match" | "nonunique" | "off";
   },
 ): {
   presets: FilterPreset[];

@@ -284,7 +284,7 @@ interface TradeRequest {
       type_filters?: {
         filters: {
           rarity?: {
-            option?: "nonunique" | "uniquefoil";
+            option?: "normal" | "magic" | "rare" | "nonunique" | "uniquefoil";
           };
           category?: {
             option?: string;
@@ -644,7 +644,7 @@ export function createTradeRequest(
 
   if (filters.foil && !filters.foil.disabled) {
     propSet(query.filters, "type_filters.filters.rarity.option", "uniquefoil");
-  } else if (filters.rarity) {
+  } else if (filters.rarity && !filters.rarity.disabled) {
     propSet(
       query.filters,
       "type_filters.filters.rarity.option",

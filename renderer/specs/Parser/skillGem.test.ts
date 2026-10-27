@@ -91,6 +91,7 @@ describe("Create Filter for uncut gems", () => {
       exact: true,
       useEn: true,
       autoFillEmptyAugmentSockets: false as const,
+      rarityFilter: "match" as const,
     };
 
     const result = createFilters(gem, opts);

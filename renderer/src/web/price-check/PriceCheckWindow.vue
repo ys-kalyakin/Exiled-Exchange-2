@@ -204,6 +204,7 @@ export default defineComponent({
         rememberCurrency: false,
         // New Settings EE2
         defaultAllSelected: false,
+        rarityFilter: "match",
         itemHoverTooltip: "keybind",
         alwaysShowTier: false,
         coreCurrency: "exalted",

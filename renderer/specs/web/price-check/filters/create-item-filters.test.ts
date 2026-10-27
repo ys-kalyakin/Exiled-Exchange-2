@@ -1,4 +1,5 @@
 import { ItemRarity, ParsedItem } from "@/parser/ParsedItem";
+import { ItemCategory } from "@/parser";
 import {
   areaLevelByAscendancyPoints,
   ascendancyPointsByAreaLevel,
@@ -132,4 +133,101 @@ describe("Ascendancy Points calcs", () => {
       expect(res).toBe(expected);
     },
   );
+});
+
+describe("rarity filter", () => {
+  it.each([
+    [ItemRarity.Normal, "normal"],
+    [ItemRarity.Magic, "magic"],
+    [ItemRarity.Rare, "rare"],
+  ])(
+    "#. Should match item rarity in match mode (%s)",
+    (rarity, expectedValue) => {
+      const item: ParsedItem = {
+        ...createTestItem(),
+        rarity,
+      };
+
+      const res = createFilters(item, createTestCreateOptions());
+
+      expect(res.rarity).toEqual({ value: expectedValue });
+    },
+  );
+
+  it.each([
+    [ItemRarity.Normal],
+    [ItemRarity.Magic],
+    [ItemRarity.Rare],
+  ])("#. Should use nonunique in legacy mode (%s)", (rarity) => {
+    const item: ParsedItem = {
+      ...createTestItem(),
+      rarity,
+    };
+
+    const res = createFilters(item, {
+      ...createTestCreateOptions(),
+      rarityFilter: "nonunique",
+    });
+
+    expect(res.rarity).toEqual({ value: "nonunique" });
+  });
+
+  it.each([ItemRarity.Normal, ItemRarity.Magic, ItemRarity.Rare])(
+    "#. Should omit rarity filter in off mode (%s)",
+    (rarity) => {
+      const item: ParsedItem = {
+        ...createTestItem(),
+        rarity,
+      };
+
+      const res = createFilters(item, {
+        ...createTestCreateOptions(),
+        rarityFilter: "off",
+      });
+
+      expect(res.rarity).toBeUndefined();
+    },
+  );
+
+  it("should keep exact preset values in legacy mode", () => {
+    const item: ParsedItem = {
+      ...createTestItem(),
+      rarity: ItemRarity.Magic,
+    };
+
+    const res = createFilters(item, {
+      ...createTestCreateOptions(),
+      exact: true,
+      rarityFilter: "nonunique",
+    });
+
+    expect(res.rarity).toEqual({ value: "magic" });
+  });
+
+  it("should force magic on adorned jewels in off mode", () => {
+    const item: ParsedItem = {
+      ...createTestItem(),
+      rarity: ItemRarity.Magic,
+      category: ItemCategory.Jewel,
+    };
+
+    const res = createFilters(item, {
+      ...createTestCreateOptions(),
+      rarityFilter: "off",
+    });
+
+    expect(res.rarity).toEqual({ value: "magic", locked: true });
+  });
+
+  it("should keep nonunique for magic tablets in match mode", () => {
+    const item: ParsedItem = {
+      ...createTestItem(),
+      rarity: ItemRarity.Magic,
+      category: ItemCategory.Tablet,
+    };
+
+    const res = createFilters(item, createTestCreateOptions());
+
+    expect(res.rarity).toEqual({ value: "nonunique" });
+  });
 });

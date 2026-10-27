@@ -34,6 +34,8 @@ interface CreateOptions {
   collapseListings: "app" | "api";
   activateStockFilter: boolean;
   exact: boolean;
+  // fork: rarity-aware search mode (price-check-rarity-filter)
+  rarityFilter: "match" | "nonunique" | "off";
   useEn: boolean;
 }
 
@@ -324,11 +326,14 @@ export function createFilters(
   if (forAdornedJewel) {
     filters.rarity = {
       value: "magic",
+      locked: true,
     };
+  } else if (opts.rarityFilter === "off") {
+    // fork: rarity constraint disabled in settings
   } else if (
     item.rarity === ItemRarity.Normal &&
     item.info.refName !== "Idol of Estazunti" &&
-    opts.exact
+    (opts.exact || opts.rarityFilter === "match")
   ) {
     // Since chance orbs only work on normal items
     filters.rarity = {
@@ -336,7 +341,7 @@ export function createFilters(
     };
   } else if (
     item.rarity === ItemRarity.Magic &&
-    opts.exact &&
+    (opts.exact || opts.rarityFilter === "match") &&
     // Ignore tablet since they should be compared to rare ones
     item.category !== ItemCategory.Tablet
   ) {
@@ -349,7 +354,11 @@ export function createFilters(
     item.rarity === ItemRarity.Rare
   ) {
     filters.rarity = {
-      value: "nonunique",
+      // fork: match mode restricts rare items to rare listings
+      value:
+        opts.rarityFilter === "match" && item.rarity === ItemRarity.Rare
+          ? "rare"
+          : "nonunique",
     };
   }
 

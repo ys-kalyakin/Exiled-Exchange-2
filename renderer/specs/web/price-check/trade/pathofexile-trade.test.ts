@@ -4,8 +4,12 @@ import path from "path";
 import { init } from "@/assets/data";
 import {
   __testExports,
+  createTradeRequest,
   DisplayItemLine,
 } from "@/web/price-check/trade/pathofexile-trade";
+import { createFilters } from "@/web/price-check/filters/create-item-filters";
+import { createTestCreateOptions, createTestItem } from "@specs/helper";
+import { ItemRarity, ParsedItem } from "@/parser/ParsedItem";
 import { setupTests } from "@specs/vitest.setup";
 
 function getFetchResult(idPrefix: string) {
@@ -59,5 +63,64 @@ describe("pathofexile-trade tooltip parsing", () => {
     const tiers = getTiers(displayItem!.explicitMods);
 
     expect(tiers).toEqual(["P19", "S1", "S1", "S1"]);
+  });
+});
+
+describe("trade request rarity option", () => {
+  beforeEach(async () => {
+    setupTests();
+    await init("en");
+  });
+
+  function buildBody(
+    rarity: ItemRarity,
+    rarityFilter: "match" | "nonunique" | "off",
+    toggledOff = false,
+  ) {
+    const item: ParsedItem = { ...createTestItem(), rarity };
+    const filters = createFilters(item, {
+      ...createTestCreateOptions(),
+      rarityFilter,
+    });
+    if (toggledOff && filters.rarity) {
+      filters.rarity.disabled = true;
+    }
+    return createTradeRequest(filters, [], item);
+  }
+
+  it("restricts a magic item to magic listings in match mode", () => {
+    const body = buildBody(ItemRarity.Magic, "match");
+
+    expect(body.query.filters.type_filters?.filters.rarity?.option).toBe(
+      "magic",
+    );
+  });
+
+  it("restricts a rare item to rare listings in match mode", () => {
+    const body = buildBody(ItemRarity.Rare, "match");
+
+    expect(body.query.filters.type_filters?.filters.rarity?.option).toBe(
+      "rare",
+    );
+  });
+
+  it("uses nonunique in legacy mode", () => {
+    const body = buildBody(ItemRarity.Magic, "nonunique");
+
+    expect(body.query.filters.type_filters?.filters.rarity?.option).toBe(
+      "nonunique",
+    );
+  });
+
+  it("omits the rarity option in off mode", () => {
+    const body = buildBody(ItemRarity.Magic, "off");
+
+    expect(body.query.filters.type_filters?.filters.rarity?.option).toBeUndefined();
+  });
+
+  it("omits the rarity option when the filter chip is toggled off", () => {
+    const body = buildBody(ItemRarity.Magic, "match", true);
+
+    expect(body.query.filters.type_filters?.filters.rarity?.option).toBeUndefined();
   });
 });

@@ -44,16 +44,10 @@
           :text="filters.mapBlighted.value"
         />
         <filter-btn-logical
-          v-if="filters.rarity?.value === 'magic'"
-          readonly
-          :filter="{ disabled: false }"
-          text="Magic"
-        />
-        <filter-btn-logical
-          v-if="filters.rarity?.value === 'normal'"
-          readonly
-          :filter="{ disabled: false }"
-          text="Normal"
+          v-if="filters.rarity"
+          :readonly="filters.rarity.locked"
+          :filter="filters.rarity"
+          :text="rarityLabel"
         />
         <filter-btn-logical
           v-if="filters.discriminator?.value"
@@ -453,6 +447,18 @@ export default defineComponent({
           return t("filters.hidden_explicit_toggle");
         } else {
           return t("filters.hidden_toggle");
+        }
+      }),
+      rarityLabel: computed(() => {
+        switch (props.filters.rarity?.value) {
+          case "normal":
+            return "Normal";
+          case "magic":
+            return "Magic";
+          case "rare":
+            return "Rare";
+          default:
+            return "Non-unique";
         }
       }),
       showMissingFracturedWarning: computed(() => {

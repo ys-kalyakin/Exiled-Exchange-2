@@ -186,6 +186,7 @@ export default defineComponent({
             ? prevListingType
             : undefined,
           defaultAllSelected: widget.value.defaultAllSelected,
+          rarityFilter: widget.value.rarityFilter,
         });
 
         if (

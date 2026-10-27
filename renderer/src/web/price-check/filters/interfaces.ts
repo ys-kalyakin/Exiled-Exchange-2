@@ -33,6 +33,9 @@ export interface ItemFilters {
   };
   rarity?: {
     value: string;
+    disabled?: boolean;
+    // fork: semantically required constraint, chip must stay read-only
+    locked?: boolean;
   };
   socketNumber?: FilterNumeric;
   linkedSockets?: FilterNumeric;

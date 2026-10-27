@@ -28,6 +28,7 @@ export function createPresets(
     searchStatRange: number;
     useEn: boolean;
     defaultAllSelected: boolean;
+    rarityFilter: "match" | "nonunique" | "off";
   },
 ): { presets: FilterPreset[]; active: string } {
   // logbooks aren't real anymore
