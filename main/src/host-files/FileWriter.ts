@@ -42,8 +42,15 @@ export class FileWriter {
         return;
       if (e.action === "client-log-event") {
         if (!this._state.clientLogFile) {
-          const filePath = path.join(this.uploadsPath, "client-log.ndjson");
-          this.openChannel(filePath, FileChannel.ClientLog, true);
+          try {
+            const filePath = path.join(this.uploadsPath, "client-log.ndjson");
+            await this.openChannel(filePath, FileChannel.ClientLog, true);
+          } catch {
+            this.logger.write(
+              "error [FileWriter] Failed to open client-log file.",
+            );
+            return;
+          }
         }
         if (e.data.ts < this._currentDateTime) {
           this.logger.write(
@@ -92,9 +99,6 @@ export class FileWriter {
 
   private async writeSessionStart(name: string, header: string) {
     try {
-      if (!existsSync(this.uploadsPath)) {
-        await fs.mkdir(this.uploadsPath, { recursive: true });
-      }
       const filePath = path.join(this.uploadsPath, name + ".csv");
       if (await this.openChannel(filePath, FileChannel.Item)) {
         this.writeLine(header, FileChannel.Item);
@@ -172,6 +176,10 @@ export class FileWriter {
     channel: FileChannel,
     overwrite: boolean = false,
   ): Promise<boolean> {
+    const dir = path.dirname(filePath);
+    if (!existsSync(dir)) {
+      await fs.mkdir(dir, { recursive: true });
+    }
     const mode = overwrite || !existsSync(filePath) ? "w" : "a";
 
     const file = await fs.open(filePath, mode);
