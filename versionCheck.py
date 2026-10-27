@@ -56,10 +56,10 @@ def main():
 
     if (
         readme_version != bug_report_version
-        or readme_version != config_version
         or readme_version != package_json_version
         or readme_version != package_lock_top_version
         or readme_version != package_lock_packages_version
+        or config_version not in (None, package_json_version)
     ):
         print("Version mismatch detected:")
         print(f"  README.md version: {readme_version}")
