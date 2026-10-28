@@ -10,6 +10,13 @@ export type GpIntent =
   | { kind: "action"; action: GpAction };
 
 /**
+ * Fork: gamepad support — where a dispatched intent came from. Gamepad
+ * covers both button presses and stick deflection; keyboard is the fixed
+ * arrow/Enter bindings.
+ */
+export type GpIntentSource = "gamepad" | "keyboard";
+
+/**
  * A navigable overlay window. Intents are dispatched to the scope whose
  * widget is the topmost shown one in the WidgetManager.
  */

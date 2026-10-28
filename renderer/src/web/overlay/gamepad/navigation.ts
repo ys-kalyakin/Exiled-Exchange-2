@@ -11,6 +11,7 @@ import { Host } from "@/web/background/IPC";
 import { AppConfig } from "@/web/Config";
 import type { Widget, WidgetManager } from "../interfaces";
 import { createIntentSource } from "./intents";
+import { inputMode } from "./inputMode";
 import {
   activateControl,
   applyFocusVisual,
@@ -325,7 +326,12 @@ export function useGamepadNavigation(wm: WidgetManager) {
   });
 
   const source = createIntentSource({
-    onIntent: navigator.dispatch,
+    // fork: gamepad support — every dispatched intent updates the input-mode
+    // tracker (hint bars follow the last source), then routes as before
+    onIntent: (intent, mode) => {
+      inputMode.value = { mode };
+      navigator.dispatch(intent);
+    },
     // fork: gamepad support — config-driven button map, timings and toggle
     getGamepadConfig: () => AppConfig().gamepad,
   });

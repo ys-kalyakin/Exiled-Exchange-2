@@ -15,7 +15,7 @@
     <div
       id="price-window"
       class="layout-column shrink-0 text-gray-200 pointer-events-auto"
-      style="width: 28.75rem"
+      style="width: 28.75rem; position: relative"
     >
       <AppTitleBar
         data-gp-row
@@ -102,6 +102,8 @@
           </i18n-t>
         </div>
       </div>
+      <!-- fork: gamepad support — input-adaptive hint bar -->
+      <input-hints :config="config" />
     </div>
     <webview
       v-if="isBrowserShown"
@@ -165,6 +167,7 @@ import {
   WidgetSpec,
 } from "../overlay/interfaces";
 import { useGamepadNavScope } from "@/web/overlay/gamepad/navigation";
+import InputHints from "@/web/overlay/gamepad/InputHints.vue";
 import { loadUltraLateItems } from "@/assets/data";
 import ReloadTradeData from "./fallback/ReloadTradeData.vue";
 
@@ -229,6 +232,7 @@ export default defineComponent({
     UiErrorBox,
     UiPopover,
     ReloadTradeData,
+    InputHints,
   },
   props: {
     config: {

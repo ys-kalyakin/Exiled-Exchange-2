@@ -399,6 +399,11 @@
       "press_combo": "Press the combo…",
       "combo_hint": "Gamepad combo — click, then hold the buttons",
       "no_combo": "Not Set",
+      "hints": {
+        "move": "Move",
+        "keyboard_move": "Move focus",
+        "keyboard_activate": "Activate"
+      },
       "intent": {
         "unmapped": "Unmapped",
         "row_up": "Row up",

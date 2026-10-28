@@ -6,7 +6,7 @@ import {
   isDirectional,
 } from "./buttonMap";
 import type { GamepadConfig } from "./config";
-import type { GpIntent } from "./types";
+import type { GpIntent, GpIntentSource } from "./types";
 
 const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 80;
@@ -23,7 +23,11 @@ export type KeyboardButtonListener = (
 ) => void;
 
 export interface IntentSourceOptions {
-  onIntent: (intent: GpIntent) => void;
+  /**
+   * Fork: gamepad support — `source` tells gamepad buttons/stick input from
+   * the fixed keyboard bindings, so the UI can follow the last input mode.
+   */
+  onIntent: (intent: GpIntent, source: GpIntentSource) => void;
   repeatDelayMs?: number;
   repeatIntervalMs?: number;
   /**
@@ -55,7 +59,11 @@ export function createIntentSource(options: IntentSourceOptions) {
     repeatIntervalMs = REPEAT_INTERVAL_MS,
   } = options;
 
-  let held: { intent: GpIntent; cancel: () => void } | null = null;
+  let held: {
+    intent: GpIntent;
+    source: GpIntentSource;
+    cancel: () => void;
+  } | null = null;
   // whether the current hold was started by the stick (its centering must
   // not cancel a hold started by a d-pad press afterwards)
   let stickHolds = false;
@@ -66,17 +74,19 @@ export function createIntentSource(options: IntentSourceOptions) {
 
   function pressHeld(
     intent: GpIntent,
+    source: GpIntentSource,
     timings: RepeatTimings = defaultTimings(),
   ) {
     releaseHeld();
     let interval: ReturnType<typeof setInterval> | undefined;
     // first repeat fires at the delay, then at the interval
     const delay = setTimeout(() => {
-      onIntent(intent);
-      interval = setInterval(() => onIntent(intent), timings.interval);
+      onIntent(intent, source);
+      interval = setInterval(() => onIntent(intent, source), timings.interval);
     }, timings.delay);
     held = {
       intent,
+      source,
       cancel: () => {
         clearTimeout(delay);
         if (interval !== undefined) clearInterval(interval);
@@ -90,9 +100,13 @@ export function createIntentSource(options: IntentSourceOptions) {
     held = null;
   }
 
-  function handlePress(intent: GpIntent, timings?: RepeatTimings) {
-    onIntent(intent);
-    if (isDirectional(intent)) pressHeld(intent, timings);
+  function handlePress(
+    intent: GpIntent,
+    source: GpIntentSource,
+    timings?: RepeatTimings,
+  ) {
+    onIntent(intent, source);
+    if (isDirectional(intent)) pressHeld(intent, source, timings);
   }
 
   function gamepadTimings(config: GamepadConfig | undefined): RepeatTimings {
@@ -127,7 +141,7 @@ export function createIntentSource(options: IntentSourceOptions) {
     }
     const intent = resolveButtonIntent(config, button);
     if (!intent || intent === "unmapped") return;
-    if (phase === "down") handlePress(intent, gamepadTimings(config));
+    if (phase === "down") handlePress(intent, "gamepad", gamepadTimings(config));
     else releaseHeld();
   });
 
@@ -152,7 +166,7 @@ export function createIntentSource(options: IntentSourceOptions) {
     if (!intent) return;
     if (phase === "down") {
       if (isRepeat) return; // holds repeat through the timer above
-      handlePress(intent);
+      handlePress(intent, "keyboard");
     } else {
       releaseHeld();
     }
@@ -180,7 +194,7 @@ export function createIntentSource(options: IntentSourceOptions) {
         : { kind: "move", axis: "row", delta: y > 0 ? 1 : -1 };
     if (stickHolds && held && isSameIntent(held.intent, intent)) return;
     stickHolds = true;
-    handlePress(intent, gamepadTimings(config));
+    handlePress(intent, "gamepad", gamepadTimings(config));
   }
 
   function isSameIntent(a: GpIntent, b: GpIntent): boolean {
@@ -275,8 +289,12 @@ if (import.meta.vitest) {
     let keyboardListener:
       | ((key: string, phase: "down" | "up", isRepeat: boolean) => void)
       | undefined;
+    const sources: GpIntentSource[] = [];
     const source = createIntentSource({
-      onIntent: (intent) => intents.push(intent),
+      onIntent: (intent, mode) => {
+        intents.push(intent);
+        sources.push(mode);
+      },
       getGamepadConfig: opts.getGamepadConfig,
       subscribeGamepad: (listener) => {
         gamepadListener = listener;
@@ -297,8 +315,48 @@ if (import.meta.vitest) {
         };
       },
     });
-    return { source, gamepadListener, axisListener, keyboardListener };
+    return { source, gamepadListener, axisListener, keyboardListener, sources };
   }
+
+  it("tags dispatched intents with their input source", () => {
+    vi.useFakeTimers();
+    const intents: GpIntent[] = [];
+    const { source, gamepadListener, axisListener, keyboardListener, sources } =
+      createTestSource(intents);
+
+    gamepadListener!("DPAD_DOWN", "down"); // gamepad button
+    vi.advanceTimersByTime(400); // the repeat keeps the gamepad source
+    keyboardListener!("ArrowDown", "down", false); // keyboard
+    axisListener!(0, 0.9); // stick deflection counts as gamepad
+
+    expect(sources).toEqual(["gamepad", "gamepad", "keyboard", "gamepad"]);
+
+    source.dispose();
+    vi.useRealTimers();
+  });
+
+  it("emits no source for unmapped buttons and disabled navigation", () => {
+    const intents: GpIntent[] = [];
+    const { source, gamepadListener, keyboardListener, sources } =
+      createTestSource(intents, {
+        getGamepadConfig: () => ({
+          navigationEnabled: false,
+          buttonIntents: { ...GAMEPAD_BUTTON_INTENTS, A: "unmapped" },
+          repeatDelayMs: 400,
+          repeatIntervalMs: 80,
+          stickDeadZone: 0.5,
+          overlayCombo: null,
+        }),
+      });
+
+    gamepadListener!("A", "down"); // unmapped
+    gamepadListener!("DPAD_DOWN", "down"); // navigation disabled
+    keyboardListener!("ArrowDown", "down", false); // keyboard stays live
+
+    expect(sources).toEqual(["keyboard"]);
+
+    source.dispose();
+  });
 
   it("fires once on press, then auto-repeats while held", () => {
     vi.useFakeTimers();
