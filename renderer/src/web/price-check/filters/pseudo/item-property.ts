@@ -12,6 +12,7 @@ import { stat, StatBetter } from "@/assets/data";
 import { ARMOUR, WEAPON, ItemCategory } from "@/parser/meta";
 import { ParsedItem } from "@/parser";
 import { ModifierType, StatRoll, StatSource } from "@/parser/modifiers";
+import { percentRoll } from "../util";
 import {
   FilterTag,
   INTERNAL_TRADE_IDS,
@@ -533,11 +534,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapDropChance) {
-    const dropChance = calcPropBounds(
-      item.mapDropChance,
-      { flat: [], incr: [] },
-      item,
-    );
+    const dropChance = mapPropBounds(item.mapDropChance, ctx);
     ctx.filters.push(
       propToFilter(
         {
@@ -553,11 +550,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapItemRarity) {
-    const itemRarity = calcPropBounds(
-      item.mapItemRarity,
-      { flat: [], incr: [] },
-      item,
-    );
+    const itemRarity = mapPropBounds(item.mapItemRarity, ctx);
     ctx.filters.push(
       propToFilter(
         {
@@ -574,7 +567,7 @@ function mapProps(ctx: FiltersCreationContext) {
 
   if (item.mapGold) {
     // doesn't exist in 0.5.2
-    const gold = calcPropBounds(item.mapGold, { flat: [], incr: [] }, item);
+    const gold = mapPropBounds(item.mapGold, ctx);
     ctx.filters.push(
       propToFilter(
         {
@@ -590,11 +583,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapMonsterRarity) {
-    const itemRarity = calcPropBounds(
-      item.mapMonsterRarity,
-      { flat: [], incr: [] },
-      item,
-    );
+    const itemRarity = mapPropBounds(item.mapMonsterRarity, ctx);
     ctx.filters.push(
       propToFilter(
         {
@@ -611,11 +600,7 @@ function mapProps(ctx: FiltersCreationContext) {
   }
 
   if (item.mapEffectiveness) {
-    const itemRarity = calcPropBounds(
-      item.mapEffectiveness,
-      { flat: [], incr: [] },
-      item,
-    );
+    const itemRarity = mapPropBounds(item.mapEffectiveness, ctx);
     ctx.filters.push(
       propToFilter(
         {
@@ -634,6 +619,23 @@ function mapProps(ctx: FiltersCreationContext) {
 
 function removeUsedStats(ctx: FiltersCreationContext, stats: Set<string>) {
   ctx.statsByType = ctx.statsByType.filter((m) => !stats.has(m.stat.ref));
+}
+
+// Waystone property lines ("Monster Rarity: 30%") don't reveal the possible
+// roll range, so calcPropBounds returns the exact value as both bounds and
+// the search range would get clamped back to it. Widen the bounds by the
+// search range to let the fill-stat-values setting apply. Fixes #1011
+function mapPropBounds(
+  total: number,
+  ctx: FiltersCreationContext,
+): { roll: StatRoll; sources: StatSource[] } {
+  const bounds = calcPropBounds(total, { flat: [], incr: [] }, ctx.item);
+  bounds.roll = {
+    ...bounds.roll,
+    min: percentRoll(bounds.roll.min, -ctx.searchInRange, Math.floor),
+    max: percentRoll(bounds.roll.max, +ctx.searchInRange, Math.ceil),
+  };
+  return bounds;
 }
 
 function isSingleAttrArmour(item: ParsedItem) {

@@ -58,6 +58,8 @@ export interface PriceCheckWidget extends Widget {
   coreCurrency: "exalted" | "chaos";
   currencyVolume: "none" | "value" | "item" | "both";
   rememberListingType: boolean;
+  // fork: kept in the config file so the choice survives a restart (#1007)
+  lastListingType?: "any" | "online" | "securable" | "available" | "onlineleague";
   initialDelay: number;
   savedAugments: {
     [key: string]: Array<string | null>;

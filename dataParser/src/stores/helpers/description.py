@@ -12,6 +12,7 @@ from constants.known_stats import (
     ALWAYS_POSITIVE,
     BETTER_LOOKUP,
     MONSTER_EFFECTIVENESS,
+    NEGATE_FORCED_OFF,
     RECOVERY_APPLIED_INSTANTLY,
     TIME_LOST_HISTORIC_JEWEL,
 )
@@ -210,7 +211,9 @@ class Description:
                     continue
                 out["value"] = value
             negate = self.parse_negate(flags)
-            if id in ACTUALLY_NEGATE_FLIPPED_IN_GAME:
+            if id in NEGATE_FORCED_OFF:
+                negate = False
+            elif id in ACTUALLY_NEGATE_FLIPPED_IN_GAME:
                 negate = True if negate is None else None
 
             if negate or self.override_negate(value_placeholders, id):
@@ -283,7 +286,7 @@ class Description:
         index = self.value_index(id)
         placeholder = value_placeholders[index]
 
-        if id in ALWAYS_POSITIVE:
+        if id in ALWAYS_POSITIVE or id in NEGATE_FORCED_OFF:
             return False
 
         return placeholder == "#|-1"

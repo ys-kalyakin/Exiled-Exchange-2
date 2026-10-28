@@ -183,7 +183,7 @@ export default defineComponent({
               ? prevCurrency
               : undefined,
           listingType: widget.value.rememberListingType
-            ? prevListingType
+            ? (prevListingType ?? widget.value.lastListingType)
             : undefined,
           defaultAllSelected: widget.value.defaultAllSelected,
           rarityFilter: widget.value.rarityFilter,
@@ -217,6 +217,21 @@ export default defineComponent({
         performance.mark("checked-item-switch-item-end");
       },
       { immediate: true, deep: true },
+    );
+
+    // keep the user's listing type choice across restarts (#1007);
+    // bulk searches force "online", that choice is not the user's
+    watch(
+      () => itemFilters.value.trade.listingType,
+      (listingType) => {
+        if (
+          widget.value.rememberListingType &&
+          tradeAPI.value === "trade" &&
+          listingType
+        ) {
+          widget.value.lastListingType = listingType;
+        }
+      },
     );
 
     watch(

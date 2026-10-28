@@ -33,6 +33,11 @@ export class Shortcuts {
   private actions: ShortcutAction[] = [];
   private stashScroll = false;
   private logKeys = false;
+  // the libuiohook keyboard hook resolves every system-wide keystroke
+  // through the active layout DLL, and the kauffmann.no Programmer Dvorak
+  // driver (kbddvp.dll 1.2.x) access-violates inside that call (#1022) —
+  // so the hook only runs while a feature actually needs it
+  private hookActive = false;
   private injector = getInjector();
   private areaTracker: WidgetAreaTracker;
   private clipboard: HostClipboard;
@@ -180,6 +185,32 @@ export class Shortcuts {
   }
 
   /**
+   * The hook thread is only consumed by stash scrolling (wheel events) and
+   * key logging; input injection posts events without it. Starting it
+   * lazily also keeps the layout-DLL calls out of processes that never
+   * enable those features.
+   */
+  private updateHookState() {
+    const needed = this.stashScroll || this.logKeys;
+    if (needed === this.hookActive) return;
+    this.hookActive = needed;
+    try {
+      if (needed) {
+        uIOhook.start();
+      } else {
+        uIOhook.stop();
+      }
+    } catch (err) {
+      this.hookActive = false;
+      this.logger.write(
+        `error [Shortcuts] failed to ${needed ? "start" : "stop"} uIOhook: ${
+          err instanceof Error ? err.message : err
+        }`,
+      );
+    }
+  }
+
+  /**
    * Wayland backend: a KWin-registered shortcut fired. The id is the hotkey
    * sequence in KWin notation ("Ctrl+D"); dispatch every matching action.
    */
@@ -206,6 +237,7 @@ export class Shortcuts {
     this.stashScroll = stashScroll;
     this.logKeys = logKeys;
     this.clipboard.updateOptions(restoreClipboard);
+    this.updateHookState();
 
     const copyItemShortcut = mergeTwoHotkeys(
       "Ctrl + C",
@@ -331,6 +363,25 @@ export class Shortcuts {
   ) {
     if (this.logKeys) {
       this.logger.write(`debug [Shortcuts] Action type: ${entry.action.type}`);
+    }
+
+    // These actions inject keystrokes into the focused window, so they only
+    // make sense inside the game. Shortcuts are supposed to be unregistered
+    // on game blur, but if that missed, the injected keys would otherwise
+    // land in whatever app the user is in (file rename in Explorer, #1023).
+    // Matches the guard in handleExternalShortcut; gamepad combos keep the
+    // previous behavior.
+    if (
+      trigger === "keyboard" &&
+      !this.poeWindow.isActive &&
+      (entry.action.type === "copy-item" ||
+        entry.action.type === "paste-in-chat" ||
+        entry.action.type === "stash-search")
+    ) {
+      this.logger.write(
+        `info [Shortcuts] Action "${entry.action.type}" fired while the game is not active, ignoring.`,
+      );
+      return;
     }
 
     // KWin shortcuts are consumed by the compositor, so on the Wayland

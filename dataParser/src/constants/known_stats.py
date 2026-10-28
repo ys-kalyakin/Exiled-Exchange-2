@@ -35,6 +35,9 @@ CHILL_ON_YOU = 1478653032
 SHOCK_ON_YOU = 3801067695
 RITUAL_TABLET_DEFER_COST = 1345835998
 FASTER_CURSE_ACTIVATION = 1104825894
+VIVISECTION_MOVEMENT_SPEED = 2146799605
+DAMAGE_PREVENTED_BY_DEFLECTION = 3552135623
+FIRE_RESISTANCE_WHEN_ON_LOW_LIFE = 38301299
 
 
 GEAR_RARITY = 3917489142
@@ -102,6 +105,23 @@ TRADE_INVERTED: set[int] = {
     CHARM_CHARGES_USED,
     # MANA_COST_OF_SKILLS, # Already flipped in descriptions
     IGNITE_EFFECT_ON_YOU,
+    # trade2 API stores these "reduced/less/faster"-worded stats as positive
+    # numbers (the trade text matches the game wording), so the negate
+    # matcher flip has to be undone in the query. Fixes #1008
+    CHILL_ON_YOU,
+    SHOCK_ON_YOU,
+    FASTER_CURSE_ACTIVATION,
+    VIVISECTION_MOVEMENT_SPEED,
+}
+
+"""
+Stats whose matchers must never be negated: the trade site stores the same
+sign as the game text, even though the description marks them as negated.
+Verified against the trade2 search API. Fixes #1013
+"""
+NEGATE_FORCED_OFF: set[int] = {
+    DAMAGE_PREVENTED_BY_DEFLECTION,
+    FIRE_RESISTANCE_WHEN_ON_LOW_LIFE,
 }
 
 VALUE_TO_DESCRIPTION_ID: dict[int, str] = {

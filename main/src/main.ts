@@ -1,7 +1,6 @@
 "use strict";
 
 import { app, systemPreferences } from "electron";
-import { uIOhook } from "uiohook-napi";
 import os from "node:os";
 import path from "node:path";
 import { startServer, eventPipe, server } from "./server";
@@ -189,8 +188,9 @@ let tray: AppTray;
           });
           console.log("Wayland overlay backend started");
         } else {
-          uIOhook.start();
-          console.log("uIOhook started");
+          // uIOhook is started lazily by Shortcuts.updateActions once the
+          // config tells us whether stash scrolling or key logging is used
+          console.log("uIOhook managed by Shortcuts (lazy start)");
         }
         const port = await startServer(appUpdater, logger);
         // TODO: move up (currently crashes)

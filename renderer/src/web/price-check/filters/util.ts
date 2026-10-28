@@ -1,16 +1,24 @@
-function decimalPlaces(value: number, dp: number | boolean): number {
+function decimalPlaces(dp: number | boolean): number {
   if (typeof dp === "number") {
     return dp;
-  } else if (!dp || Math.abs(value) >= 10) {
-    return 0;
   } else {
-    return Math.abs(value) < 2.3 ? 2 : 1;
+    return dp ? 2 : 0;
   }
 }
 
+// e.g. 4.95 is stored as 4.9499...93 in binary, so scaling + trunc without
+// nudging back onto the decimal grid returns 4.94 instead of 4.95.
+// nudge down for ceil, up for floor/trunc, so values that sit exactly
+// on the grid don't cross to the neighboring cell
+function ontoDecimalGrid(value: number, dir: 1 | -1): number {
+  return value + dir * Math.abs(value) * 1e-9;
+}
+
 export function roundRoll(value: number, dp: boolean) {
-  const rounding = Math.pow(10, decimalPlaces(value, dp));
-  return Math.trunc(value * rounding) / rounding;
+  const rounding = Math.pow(10, decimalPlaces(dp));
+  return (
+    Math.trunc(ontoDecimalGrid(value, value < 0 ? -1 : 1) * rounding) / rounding
+  );
 }
 
 export function percentRoll(
@@ -20,8 +28,11 @@ export function percentRoll(
   dp: number | boolean = false,
 ): number {
   const res = value + (Math.abs(value) * p) / 100;
-  const rounding = Math.pow(10, decimalPlaces(value, dp));
-  return method((res + Number.EPSILON) * rounding) / rounding;
+  const rounding = Math.pow(10, decimalPlaces(dp));
+  return (
+    method(ontoDecimalGrid(res, method === Math.floor ? 1 : -1) * rounding) /
+    rounding
+  );
 }
 
 export function percentRollDelta(
@@ -32,6 +43,9 @@ export function percentRollDelta(
   dp = false,
 ): number {
   const res = value + (delta * p) / 100;
-  const rounding = Math.pow(10, decimalPlaces(value, dp));
-  return method((res + Number.EPSILON) * rounding) / rounding;
+  const rounding = Math.pow(10, decimalPlaces(dp));
+  return (
+    method(ontoDecimalGrid(res, method === Math.floor ? 1 : -1) * rounding) /
+    rounding
+  );
 }
