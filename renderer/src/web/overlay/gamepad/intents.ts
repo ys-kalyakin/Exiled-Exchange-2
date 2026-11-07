@@ -141,7 +141,8 @@ export function createIntentSource(options: IntentSourceOptions) {
     }
     const intent = resolveButtonIntent(config, button);
     if (!intent || intent === "unmapped") return;
-    if (phase === "down") handlePress(intent, "gamepad", gamepadTimings(config));
+    if (phase === "down")
+      handlePress(intent, "gamepad", gamepadTimings(config));
     else releaseHeld();
   });
 

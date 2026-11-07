@@ -39,7 +39,9 @@ export function hintChips(
     const intent = intents[button] ?? GAMEPAD_BUTTON_INTENTS[button];
     if (!intent || intent === "unmapped" || intent.kind === "move") continue;
     const labelKey =
-      intent.kind === "action" ? `intent.${intent.action}` : `intent.${intent.kind}`;
+      intent.kind === "action"
+        ? `intent.${intent.action}`
+        : `intent.${intent.kind}`;
     chips.push({ id: button, key: button, labelKey });
   }
   return chips;
