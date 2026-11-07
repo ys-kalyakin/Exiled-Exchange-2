@@ -103,8 +103,7 @@ openspec/
 
 - **Master specs** describe the system as it exists today (`openspec/specs/<capability>/spec.md`, format: `## Purpose` + `## Requirements` with `### Requirement:` / `#### Scenario:` blocks). Keep them in sync when behavior changes.
 - **Project context** lives in `openspec/config.yaml` (`context:` field) — fork constraints (gamepad feature, upstream mergeability) that agents must honor.
-- **Workflow** (ZCode slash commands from `.zcode/commands/opsx/`, skills in `.zcode/skills/`):
-  - `/opsx:propose <idea>` – plan a change (proposal, delta specs, design, tasks; planning only, no code edits)
+- **Workflow** (ZCode slash commands from `.zcode/commands/opsx/`, skills in `.zcode/skills/`; new changes are proposed in the `electron-overlay-window-next` repo, which owns the `/opsx:propose` workflow):
   - `/opsx:apply <change>` – implement the planned change
   - `/opsx:sync` / `/opsx:archive <change>` – merge delta specs into master specs
   - `/opsx:explore`, `/opsx:update` – exploration and artifact refresh

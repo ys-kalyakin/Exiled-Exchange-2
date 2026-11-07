@@ -21,7 +21,7 @@
   "main": "dist/main.js",
   "dependencies": {
     "dbus-next": "^0.10.2",
-    "electron-overlay-window": "4.1.0",
+    "electron-overlay-window-next": "0.1.0",
     "gamepad-io": "^0.3.2",
     "node-hid": "^3.3.0",
     "uiohook-napi": "1.5.x"
@@ -55,7 +55,7 @@
   },
   "allowScripts": {
     "electron@44.9.3": true,
-    "electron-overlay-window@4.0.2": true,
+    "electron-overlay-window@4.1.0": true,
     "electron-winstaller@5.4.0": true,
     "esbuild@0.28.0": true,
     "uiohook-napi@1.5.4": true

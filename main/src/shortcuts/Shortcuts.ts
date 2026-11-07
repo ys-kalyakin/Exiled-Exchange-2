@@ -1,7 +1,7 @@
 import { screen, globalShortcut } from "electron";
 import { uIOhook, UiohookKey, UiohookWheelEvent } from "uiohook-napi";
 import { getInjector } from "./InputInjector";
-import { getKWinBridge, isWaylandBackend } from "../windowing/kwin";
+import { getKWinBridge, isWaylandBackend } from "electron-overlay-window-next";
 import {
   isModKey,
   KeyToElectron,

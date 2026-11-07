@@ -2,7 +2,7 @@ import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
 import { Message, sessionBus } from "dbus-next";
 import { clipboard } from "electron";
-import { isWaylandBackend } from "../windowing/kwin";
+import { isWaylandBackend } from "electron-overlay-window-next";
 
 const execFile = promisify(execFileCb);
 

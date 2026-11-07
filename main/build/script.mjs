@@ -26,6 +26,7 @@ const mainContext = await esbuild.context({
   external: [
     "electron",
     "uiohook-napi",
+    "electron-overlay-window-next",
     "electron-overlay-window",
     "node-hid",
     "@sensslen/node-gamepad",

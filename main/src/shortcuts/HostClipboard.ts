@@ -1,5 +1,5 @@
 import type { Logger } from "../RemoteLogger";
-import { isWaylandBackend } from "../windowing/kwin";
+import { isWaylandBackend } from "electron-overlay-window-next";
 import { readClipboardText, writeClipboardText } from "./WaylandClipboard";
 
 const POLL_DELAY = 48;

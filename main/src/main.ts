@@ -16,7 +16,8 @@ import { GameLogWatcher } from "./host-files/GameLogWatcher";
 import { HttpProxy } from "./proxy";
 import { installExtension, VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import { FileWriter } from "./host-files/FileWriter";
-import { detectBackend, initKWinBridge } from "./windowing/kwin";
+import { detectBackend, initKWinBridge } from "electron-overlay-window-next";
+import { OVERLAY_WINDOW_TITLE } from "./windowing/OverlayWindow";
 
 const DEFAULT_GAME_TITLE = "Path of Exile 2";
 
@@ -126,7 +127,12 @@ let tray: AppTray;
             ? initKWinBridge(
                 logger,
                 path.join(app.getPath("userData"), "kwin"),
-                { gameTitle: DEFAULT_GAME_TITLE, shortcuts: [] },
+                {
+                  gameTitle: DEFAULT_GAME_TITLE,
+                  shortcuts: [],
+                  overlayTitle: OVERLAY_WINDOW_TITLE,
+                  dbusServiceName: "io.github.kvan7.ExiledExchange2.KWin",
+                },
               )
             : undefined;
         const overlay = new OverlayWindow(eventPipe, logger, poeWindow);

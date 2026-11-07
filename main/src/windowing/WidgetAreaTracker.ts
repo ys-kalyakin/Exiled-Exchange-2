@@ -1,6 +1,6 @@
 import { Rectangle, Point, screen } from "electron";
 import { uIOhook, UiohookMouseEvent } from "uiohook-napi";
-import { getKWinBridge, isWaylandBackend } from "./kwin";
+import { getKWinBridge, isWaylandBackend } from "electron-overlay-window-next";
 import type { OverlayWindow } from "./OverlayWindow";
 import type { ServerEvents } from "../server";
 

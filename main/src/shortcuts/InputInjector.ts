@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { uIOhook, UiohookKey } from "uiohook-napi";
-import { isWaylandBackend } from "../windowing/kwin";
+import { isWaylandBackend } from "electron-overlay-window-next";
 
 export interface InputInjector {
   readonly kind: "libuiohook" | "ydotool";

@@ -3,11 +3,17 @@ import { BrowserWindow, dialog, shell, Menu } from "electron";
 import {
   OverlayController,
   OVERLAY_WINDOW_OPTS,
-} from "electron-overlay-window";
-import { getKWinBridge, isWaylandBackend, OVERLAY_WINDOW_TITLE } from "./kwin";
+  bindOverlayWindow,
+} from "electron-overlay-window-next";
 import type { ServerEvents } from "../server";
 import type { Logger } from "../RemoteLogger";
 import type { GameWindow } from "./GameWindow";
+
+/**
+ * Title of the overlay BrowserWindow, matched by the compositor integration
+ * on the Wayland backend (set by renderer/index.html).
+ */
+export const OVERLAY_WINDOW_TITLE = "Exiled Exchange 2";
 
 export class OverlayWindow {
   public isInteractable = false;
@@ -45,9 +51,6 @@ export class OverlayWindow {
       icon: path.join(__dirname, process.env.STATIC!, "icon.png"),
       ...OVERLAY_WINDOW_OPTS,
       title: OVERLAY_WINDOW_TITLE,
-      // the KWin script sizes the overlay to the game bounds, which the
-      // compositor can only do for resizable windows
-      ...(isWaylandBackend() ? { resizable: true } : {}),
       width: 800,
       height: 600,
       webPreferences: {
@@ -58,10 +61,9 @@ export class OverlayWindow {
       },
     });
 
-    // The KWin script drives placement/stacking for this window (Wayland)
-    if (isWaylandBackend()) {
-      getKWinBridge()?.bindOverlayWindow(this.window);
-    }
+    // The KWin script drives placement/stacking for this window (Wayland);
+    // a no-op on every other backend
+    bindOverlayWindow(this.window);
 
     this.window.setMenu(
       Menu.buildFromTemplate([
@@ -108,12 +110,7 @@ export class OverlayWindow {
 
       this.onOverlayActive();
 
-      if (isWaylandBackend()) {
-        getKWinBridge()?.activateOverlay();
-        this.window?.setIgnoreMouseEvents(false);
-      } else {
-        OverlayController.activateOverlay();
-      }
+      OverlayController.activateOverlay();
       this.poeWindow.isActive = false;
     }
   };
@@ -121,12 +118,7 @@ export class OverlayWindow {
   assertGameActive = () => {
     if (this.isInteractable) {
       this.isInteractable = false;
-      if (isWaylandBackend()) {
-        getKWinBridge()?.focusGame();
-        this.window?.setIgnoreMouseEvents(true);
-      } else {
-        OverlayController.focusTarget();
-      }
+      OverlayController.focusTarget();
       this.poeWindow.isActive = true;
 
       this.onGameActive();

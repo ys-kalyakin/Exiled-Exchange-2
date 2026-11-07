@@ -1202,6 +1202,15 @@ electron-devtools-installer@^4.0.0:
   dependencies:
     unzip-crx-3 "^0.2.0"
 
+electron-overlay-window-next@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/electron-overlay-window-next/-/electron-overlay-window-next-0.1.0.tgz"
+  integrity sha512-mm2U9ukgWQRr1hZBOf0r8h6rzLPFfwWUAs0IvuJY9eZaXAx8ektKvfgiATMVAmxg00ZsnE5P4ZUud/OPPrlucg==
+  dependencies:
+    dbus-next "^0.10.2"
+    electron-overlay-window "4.1.0"
+    ini "^7.0.0"
+
 electron-overlay-window@4.1.0:
   version "4.1.0"
   resolved "https://registry.npmjs.org/electron-overlay-window/-/electron-overlay-window-4.1.0.tgz"
@@ -1251,7 +1260,7 @@ electron-winstaller@5.4.0:
   optionalDependencies:
     "@electron/windows-sign" "^1.1.2"
 
-electron@^44.9.3, "electron@>= 18":
+electron@^44.9.3, "electron@>= 18", electron@>=30.0.0:
   version "44.9.3"
   resolved "https://registry.npmjs.org/electron/-/electron-44.9.3.tgz"
   integrity sha512-Cv9/yMnZxNWsMlIe8T4v//NKHdUvbeyoTJoXE3BIcRxus2meeFaO9h/P3zB5d4cBXum51IgAYrT2QjpIDWKpJA==
@@ -2241,6 +2250,11 @@ ini@^6.0.0:
   version "6.0.0"
   resolved "https://registry.npmjs.org/ini/-/ini-6.0.0.tgz"
   integrity sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ==
+
+ini@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/ini/-/ini-7.0.0.tgz"
+  integrity sha512-ifK0CgjALofS5bkrcTy4RaQ9Vx2Knf/eLeIO+NaswQEpH1UblrtTSCIvN71qQDMq0PeQ/SSPojvEJp9vvvfr+w==
 
 internal-slot@^1.1.0:
   version "1.1.0"

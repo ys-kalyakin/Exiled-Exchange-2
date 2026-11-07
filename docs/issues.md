@@ -54,6 +54,8 @@ title: Common issues
 
 On KDE Plasma 6 Wayland sessions the app runs a native Wayland backend
 (KWin script + DBus bridge), which no longer requires forcing XWayland.
+Wayland sessions without KDE Plasma (for example GNOME) automatically fall
+back to the X11 (XWayland) backend.
 Actions that inject input into the game (Copy Item, Paste-in-Chat, Stash
 Search) need the [ydotool](https://github.com/ReimuNotMoe/ydotool) helper
 (`ydotoold` running); without it they are disabled with a notice. Stash

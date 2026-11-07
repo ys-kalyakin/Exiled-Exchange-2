@@ -6,7 +6,7 @@ Renders the app as a transparent, always-on-top overlay attached to the Path of 
 ## Requirements
 
 ### Requirement: Overlay attachment to the game window
-The main process SHALL create the overlay as a transparent, frameless, always-on-top window bound to the game window bounds (via `electron-overlay-window`), and SHALL keep it aligned when the game window moves or is resized.
+The main process SHALL create the overlay as a transparent, frameless, always-on-top window bound to the game window bounds (via the overlay backend package), and SHALL keep it aligned when the game window moves or is resized.
 
 #### Scenario: Game window is moved
 - **WHEN** the Path of Exile 2 window changes position or size
